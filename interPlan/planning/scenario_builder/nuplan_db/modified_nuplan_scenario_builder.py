@@ -15,7 +15,7 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     download_file_if_necessary,
     absolute_path_to_log_name,
 )
-from interactive_benchmark.planning.scenario_builder.nuplan_db.modified_nuplan_scenario import ModifiedNuPlanScenario
+from interPlan.planning.scenario_builder.nuplan_db.modified_nuplan_scenario import ModifiedNuPlanScenario
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_filter_utils import (
     FilterWrapper,
     GetScenariosFromDbFileParams,
