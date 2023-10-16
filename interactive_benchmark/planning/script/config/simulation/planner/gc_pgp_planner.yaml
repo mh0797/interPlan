@@ -1,0 +1,8 @@
+gc_pgp_planner:
+  _target_: interactive_benchmark.planning.simulation.planner.ml_planner.ml_planner.MLPlanner
+  _convert_: 'all'
+  _recursive_: False
+
+  model_config: ${gc_pgp_model} # Dictionary key from existing planner model config (e.g. raster_model)
+  checkpoint_path: ???  # Path to trained model checkpoint
+

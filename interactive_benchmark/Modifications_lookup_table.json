@@ -1,0 +1,47 @@
+[ {
+  "token" : "5016a2a4ad1350d6",
+  "extra_agents_to_spawn" : [],
+  "spawn_in_intersection" : false,
+  "goal": {"left": null, "right": null, "straight":null}
+}, {
+  "token" : "18089089fbd655a5",
+  "extra_agents_spawn_locations" : [],
+  "goal": {"left": "664444.96, 3998088.68", "right": "664486.83, 3997827.64", "straight":"664588.19, 3997852.86"}
+}, {
+  "token" : "be26ad0fc1035314",
+  "extra_agents_to_spawn" : [[664578.55, 3999042.58, 0]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": "664567.07, 3999206.41", "right": null, "straight":null}
+}, {
+  "token" : "2d754c5d1e325ba4",
+  "extra_agents_to_spawn" : [[664578.55, 3999042.58, 0]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": "664567.07, 3999206.41", "right": null, "straight":null}
+}, {
+  "token" : "cfad48a855765482",
+  "extra_agents_to_spawn" : [[664578.55, 3999042.58, 0]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": "664567.07, 3999206.41", "right": null, "straight":null}
+}, {
+  "token" : "feb82815b92a5512",
+  "extra_agents_to_spawn" : [[664418.07, 3997723.95, 0]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": "664385.35, 3997616.77", "right": "664486.82, 3997505.52", "straight":null}
+}, {
+  "token" : "4a43ee2c4df75661",
+  "extra_agents_to_spawn" : [[365119.23, 143392.12, 0], [365129.0, 143387.04, 0 ]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": null, "right": null, "straight":null}
+}, {
+  "token" : "cd0e827efbe85a8f",
+  "extra_agents_to_spawn" : [[365123.67, 143382.68, 0], [365129.0, 143387.04, 0 ]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": null, "right": null, "straight":null}
+}, {
+  "token" : "5eb9b51ebe1758df",
+  "extra_agents_to_spawn" : [[664418.37, 3997722.05, 0]],
+  "spawn_in_intersection" : true,
+  "goal": {"left": "664423.69, 3997628.88", "right": null, "straight":null}
+}
+
+]

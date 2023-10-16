@@ -1,0 +1,40 @@
+_target_: interactive_benchmark.planning.scenario_builder.benchmark_scenario_filter.BenchmarkScenarioFilter
+_convert_: 'all'
+
+scenario_types:  null                # List of scenario types to include
+scenario_tokens: null               # List of scenario tokens to include
+  
+
+log_names: ${splitter.log_splits.test}  # Use all logs present in the test split
+map_names: null                     # Filter scenarios by map names
+
+num_scenarios_per_type: 100         # Number of scenarios per type
+limit_total_scenarios: null         # Limit total scenarios (float = fraction, int = num) - this filter can be applied on top of num_scenarios_per_type
+timestamp_threshold_s: null         # Filter scenarios to ensure scenarios have more than `timestamp_threshold_s` seconds between their initial lidar timestamps
+ego_displacement_minimum_m: null    # Whether to remove scenarios where the ego moves less than a certain amount
+ego_start_speed_threshold: null     # Limit to scenarios where the ego reaches a certain speed from below
+ego_stop_speed_threshold: null      # Limit to scenarios where the ego reaches a certain speed from above
+speed_noise_tolerance: null         # Value at or below which a speed change between two timepoints should be ignored as noise.
+
+expand_scenarios: false             # Whether to expand multi-sample scenarios to multiple single-sample scenarios
+remove_invalid_goals: false          # Whether to remove scenarios where the mission goal is invalid
+shuffle: false                      # Whether to shuffle the scenarios
+
+modifications:
+  accel_max: ${oc.select:observation.accel_max, 1}
+  decel_max: ${oc.select:observation.decel_max, 2}
+  scenario_specifics: null
+  lookup_table_path: null
+
+only_in_benchmark_scenarios: true             # Only include tokens-modifications from the list of valid tokens
+valid_tokens: {                      # Tokens included in the benchmark and their modifications
+  18089089fbd655a5: {goal: [l,r,s], density: [l,m,h], agent_variations: [1]},
+  cfad48a855765482: {goal: [l,s], density: [l,m,h], agent_variations: [1]}, 
+  d480a5d2b0fe5fe6: {goal: [l,s], density: [l,m,h], agent_variations: [1]}, 
+  feb82815b92a5512: {goal: [l,r,s], density: [l,m,h], agent_variations: [1]},
+  5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], agent_variations: [1]},
+  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], agent_variations: [1]}, 
+  71f182558ee95100: {goal: [l,r,s], density: [l,m], agent_variations: [1]},
+  948201ecfe2c560a: {goal: [l,s], density: [l,m], agent_variations: [1]}, 
+  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], agent_variations: [1]}}
+ 
