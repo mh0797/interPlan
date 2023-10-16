@@ -1,4 +1,4 @@
-_target_: interactive_benchmark.planning.scenario_builder.benchmark_scenario_filter.BenchmarkScenarioFilter
+_target_: interPlan.planning.scenario_builder.benchmark_scenario_filter.BenchmarkScenarioFilter
 _convert_: 'all'
 
 scenario_types:  null                # List of scenario types to include

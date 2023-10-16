@@ -1,5 +1,5 @@
 time_to_collision_within_bound_statistics:
-  _target_: interactive_benchmark.planning.metrics.evaluation_metrics.common.brake_threat_number.BrakeThreatNumberStatistics
+  _target_: interPlan.planning.metrics.evaluation_metrics.common.brake_threat_number.BrakeThreatNumberStatistics
   _convert_: 'all'
   name: 'brake_threat_number'
   category: 'Planning'

@@ -1,5 +1,5 @@
 idm_planner:
-  _target_: interactive_benchmark.planning.simulation.planner.idm_mobil_planner.IDMMobilPlanner
+  _target_: interPlan.planning.simulation.planner.idm_mobil_planner.IDMMobilPlanner
   _convert_: 'all'
   target_velocity: 10             # Desired velocity in free traffic [m/s]
   min_gap_to_lead_agent: 1.0      # Minimum relative distance to lead vehicle [m]

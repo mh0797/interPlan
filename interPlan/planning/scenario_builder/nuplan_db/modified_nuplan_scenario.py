@@ -4,7 +4,7 @@ import json
 from functools import cached_property
 
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario import NuPlanScenario
-from interactive_benchmark.planning.scenario_builder.scenario_modifier.agents_modifier import AgentsModifier
+from interPlan.planning.scenario_builder.scenario_modifier.agents_modifier import AgentsModifier
 
 
 from typing import Any, List, Optional, Tuple, Type, Dict, Union, cast, Generator
@@ -34,7 +34,7 @@ from nuplan.common.maps.nuplan_map.lane_connector import NuPlanLaneConnector
 from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject, RoadBlockGraphEdgeMapObject
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
-from interactive_benchmark.planning.simulation.planner.utils.breadth_first_search_lane_goal import BreadthFirstSearch # TODO new name for this
+from interPlan.planning.simulation.planner.utils.breadth_first_search_lane_goal import BreadthFirstSearch # TODO new name for this
 
 
 
