@@ -196,26 +196,17 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                                                                 [SemanticMapLayer.ROADBLOCK, SemanticMapLayer.ROADBLOCK_CONNECTOR])
             proximal_roadblocks = proximal_roadblocks[SemanticMapLayer.ROADBLOCK] + proximal_roadblocks[SemanticMapLayer.ROADBLOCK_CONNECTOR]
             candidate_lane_edge_ids = []
-            closest_distance = 10000
-            find_starting_edge = True
+            find_starting_roadblock = True
             for roadblock in proximal_roadblocks:
                 interior_edges = roadblock.interior_edges
                 # Adding lanes to candidate lanes (every lane near ego)
                 candidate_lane_edge_ids.extend([interior_edge.id for interior_edge in interior_edges])
-                # Finding the starting lane
-                if roadblock.id in roadblock_ids[0:3] and find_starting_edge: 
-                    for edge in interior_edges:
-                        if edge.contains_point(self.initial_ego_state.center):
-                            starting_edge = edge
-                            find_starting_edge = False
-                            break
+                # Finding the starting roadblock    
+                if find_starting_roadblock and roadblock.contains_point(self.initial_ego_state.center): 
+                    starting_roadblock = roadblock
+                    find_starting_roadblock = False
 
-                        # In case the ego does not start on a road block
-                        distance = edge.polygon.distance(self.initial_ego_state.car_footprint.geometry)
-                        if distance < closest_distance:
-                            starting_edge = edge
-                            closest_distance = distance
-            assert starting_edge, "Starting edge for the first roadblocks could not be found!"
+            assert starting_roadblock, "Starting roadblock could not be found!"
 
             # Find Roadblock that corresponds to the goal
             try:
@@ -232,11 +223,10 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 raise AssertionError(f"In scenario with token {self.token} the selected {direction} goal is located in a intersection"+
                                      " where multiple roadblocks meet")
             
-            self.route_plan, path_found = self.search_route_to_goal(starting_edge.parent, goal_lane, candidate_lane_edge_ids, len(roadblock_ids))
-            # TODO no need to find starter edge (?)
+            self.route_plan, path_found = self.search_route_to_goal(starting_roadblock, goal_lane, candidate_lane_edge_ids, len(roadblock_ids))
             
             assert path_found, "Path to the goal not found" 
-            #TODO make so that it is able to find a path for the cases where the edge to follow the route is paralel  to the edge where ego is (LC)
+            #TODO make so that it is able to find a path for the cases where the edge to follow the route is paralel to the edge where ego is (LC)
            
             roadblock_ids = []
             for edge in self.route_plan:
