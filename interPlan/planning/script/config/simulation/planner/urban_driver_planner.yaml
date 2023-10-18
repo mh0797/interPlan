@@ -1,5 +1,5 @@
 urban_driver_planner:
-  _target_: interPlan.planning.simulation.planner.ml_planner.ml_planner.MLPlanner
+  _target_: nuplan.planning.simulation.planner.ml_planner.ml_planner.MLPlanner
   _convert_: 'all'
   _recursive_: False
 
