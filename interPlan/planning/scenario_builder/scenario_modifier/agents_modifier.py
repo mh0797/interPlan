@@ -371,7 +371,7 @@ class ModifiedAgent(Agent):
             self._velocity.x = 0 """
 
 
-    def get_path_to_go(self) -> list(StateSE2):
+    def get_path_to_go(self) -> list(StateSE2): # TODO change this to function already in nuplan.simulation.utils.agent_utils
         path = []
         velocity = rotate_angle(StateSE2(self.velocity.x, self.velocity.y, self._box._center.heading) , -self._box._center.heading)
         for i in np.arange(0, 1.6, 0.1): #TODO here is refering to the headaway time, change this value when headawaytime changes

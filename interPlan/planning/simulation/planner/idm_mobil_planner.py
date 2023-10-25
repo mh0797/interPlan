@@ -35,6 +35,8 @@ from nuplan.planning.simulation.trajectory.interpolated_trajectory import Interp
 from nuplan.planning.simulation.trajectory.predicted_trajectory import PredictedTrajectory
 from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import STRTreeOccupancyMap
 
+from interPlan.planning.utils.agent_utils import get_agent_constant_velocity_geometry
+
 UniqueObjects = Dict[str, SceneObject]
 
 logger = logging.getLogger(__name__)
@@ -543,15 +545,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         expanded_path = path_to_linestring(path_to_go).buffer((ego_footprint.width / 2), cap_style=CAP_STYLE.square)
         return unary_union([expanded_path, ego_state.car_footprint.geometry])
     
-    def _get_expanded_agent_path(self, agent: Agent) -> Polygon:
-        """
-        Returns the agent's expanded path (constant velocity, going straight) as a Polygon.
-        :return: A polygon representing the agent's path.
-        """
-        path_to_go = get_agent_constant_velocity_path(agent)            
-        expanded_path = path_to_linestring(path_to_go).buffer((agent.box.width / 2), cap_style=CAP_STYLE.square)
-        return unary_union([expanded_path, agent.box.geometry])
-    
     def _get_leading_object_in_AL(
         self,
         ego_idm_state: IDMAgentState,
@@ -621,7 +614,7 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         extended_occupancy_map = STRTreeOccupancyMap({})
         for id in unique_observations:
             if isinstance(unique_observations[id], Agent):
-                extended_occupancy_map.set(id, self._get_expanded_agent_path(unique_observations[id]))
+                extended_occupancy_map.set(id, get_agent_constant_velocity_geometry(unique_observations[id]))
 
         intersecting_agents = extended_occupancy_map.intersects(ego_state.car_footprint.geometry)
 
@@ -778,11 +771,3 @@ class IDMMobilPlanner(AbstractIDMPlanner):
                     occupancy_map.remove(["red_light_"+t_light_lane_c.id])
                 
 
-def get_agent_constant_velocity_path(agent: Agent, length: float = 3) -> list[ProgressStateSE2]:
-    path = []
-    for i in np.arange(0, length + 0.1, 0.1):
-        path.append(
-            StateSE2(agent.center.x + i*agent.velocity.x, agent.center.y + i*agent.velocity.y,agent.center.heading)
-            )
-    path: ProgressStateSE2 = convert_se2_path_to_progress_path(path)    
-    return path

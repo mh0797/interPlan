@@ -1,4 +1,4 @@
-idm_planner:
+idm_mobil_planner:
   _target_: interPlan.planning.simulation.planner.idm_mobil_planner.IDMMobilPlanner
   _convert_: 'all'
   target_velocity: 10             # Desired velocity in free traffic [m/s]
