@@ -1,0 +1,81 @@
+import hydra
+import os
+from pathlib import Path
+from nuplan.planning.script.run_simulation import main as main_simulation
+import warnings
+warnings.filterwarnings('ignore', message="(.|\n)*invalid value encountered in line_locate_point")
+
+from interPlan.planning.utils.modifications_preprocessing import preprocess_scenario_filter
+
+#-------------------------------------------------
+# Run simulation
+#-------------------------------------------------
+# Location of path with all simulation configs
+nuplan_devkit_absolute_path = "/home/USER/nuplan-devkit" # For Example
+path_to_devkit = os.path.relpath(nuplan_devkit_absolute_path, Path(__file__).parent.resolve())
+lookup_table_path = Path(nuplan_devkit_absolute_path + "/Modifications_lookup_table.json")
+config_path = "nuplan/planning/script/config/simulation/"
+CONFIG_PATH = os.path.join(path_to_devkit, config_path)
+CONFIG_NAME = 'default_simulation'
+
+experiments_path = "/home/USER/scripts/" # For example
+SAVE_DIR = Path(experiments_path + "Experiments") 
+CHECKPOINT_PDM = Path(experiments_path + "model_checkpoints/checkpoints/pdm_open_checkpoint.ckpt")
+CHECKPOINT_GCPGP = Path(experiments_path + "model_checkpoints/checkpoints/gc_pgp_checkpoint.ckpt")
+CHECKPOINT_URBANDRIVER = Path(experiments_path + "model_checkpoints/checkpoints/urbandriver_checkpoint.ckpt")
+
+
+
+# Select the planner and simulation challenge
+PLANNER = ['idm_mobil_planner']
+# Options are: ["idm_planner", 'idm_mobil_planner', "pdm_closed_planner", "pdm_open_planner", "urban_driver_planner", "gc_pgp_planner"]
+CHALLENGE = 'run_benchmark' 
+DATASET_PARAMS = [
+    "scenario_filter=benchmark_scenarios",
+    "scenario_filter.scenario_tokens=[71f182558ee95100-s0, cd0e827efbe85a8f-s0, cfad48a855765482-s0, 2d62c3139aa95007-s0, c710330e5114501c-s0, c710330e5114501c-s1, 5016a2a4ad1350d6-s0]",
+    f"scenario_filter.modifications.lookup_table_path={lookup_table_path}",
+    "scenario_builder=nuplan_modifications",
+
+    f"planner.pdm_open_planner.checkpoint_path={CHECKPOINT_PDM}",
+    f"planner.urban_driver_planner.checkpoint_path={CHECKPOINT_URBANDRIVER}" ,
+    f"planner.gc_pgp_planner.checkpoint_path={CHECKPOINT_GCPGP}", 
+    "+model@urban_driver_model=urban_driver_open_loop_model",
+    "+model@gc_pgp_model=gc_pgp_model", 
+    "model=gc_pgp_model", # The GCPGP Model has to have this 
+    "gc_pgp_model.aggregator.pre_train=false", 
+
+    'hydra.searchpath=[\
+        \"pkg://interPlan.planning.script.config.common\", \
+        \"pkg://interPlan.planning.script.config.simulation\", \
+        \"pkg://interPlan.planning.script.experiments\", \
+        \"pkg://nuplan_garage.planning.script.config.common\", \
+        \"pkg://nuplan_garage.planning.script.config.simulation\",\
+        \"pkg://nuplan.planning.script.config.common\", \
+        \"pkg://nuplan.planning.script.experiments\"]', 
+                ]
+
+
+# Name of the experiment
+EXPERIMENT = 'simulation_simple_experiment'
+
+# Initialize configuration management system
+hydra.core.global_hydra.GlobalHydra.instance().clear()  # reinitialize hydra if already initialized
+hydra.initialize(config_path=CONFIG_PATH)
+
+# Compose the configuration
+cfg = hydra.compose(config_name=CONFIG_NAME, overrides=[
+    f'experiment_name={EXPERIMENT}',
+    f'group={SAVE_DIR}',
+    f'planner={PLANNER}',
+    f'+simulation={CHALLENGE}',
+    *DATASET_PARAMS,
+])
+
+# Proprocess token Names
+preprocess_scenario_filter(cfg)
+
+# Run the simulation loop (real-time visualization not yet supported, see next section for visualization)
+main_simulation(cfg)
+
+
+
