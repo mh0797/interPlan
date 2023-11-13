@@ -64,7 +64,8 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 ego_vehicle_parameters, sensor_root)
 
         
-        lookup_table = json.load(open(modification["lookup_table_path"]))
+        # lookup_table = json.load(open(modification["lookup_table_path"]))
+        lookup_table = modification["scenario_specific_modification"]
         self.lookup_table = next((elem for elem in lookup_table if elem["token"] == self.token), None)
 
         # Add modification attribute in case the scenario is modified

@@ -26,12 +26,6 @@ expand_scenarios: false             # Whether to expand multi-sample scenarios t
 remove_invalid_goals: false          # Whether to remove scenarios where the mission goal is invalid
 shuffle: false                      # Whether to shuffle the scenarios
 
-modifications:
-  accel_max: ${oc.select:observation.accel_max, 1}
-  decel_max: ${oc.select:observation.decel_max, 2}
-  scenario_specifics: null
-  lookup_table_path: null
-
 only_in_benchmark_scenarios: true             # Only include tokens-modifications from the list of valid tokens
 valid_tokens: {                      # Tokens included in the benchmark and their modifications
   18089089fbd655a5: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
@@ -44,3 +38,285 @@ valid_tokens: {                      # Tokens included in the benchmark and thei
   948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
   5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
   2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]}}
+
+modifications:
+  accel_max: ${oc.select:observation.accel_max, 1}
+  decel_max: ${oc.select:observation.decel_max, 2}
+  scenario_specifics: null
+  scenario_specific_modification: 
+  - extra_agents_spawn_locations: []
+    goal:
+      left: 664444.96, 3998088.68
+      right: 664486.83, 3997827.64
+      straight: 664588.19, 3997852.86
+    token: 18089089fbd655a5
+  - extra_agents_to_spawn:
+    - - 664578.55
+      - 3999042.58
+      - 0
+    goal:
+      left: 664567.07, 3999206.41
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    token: be26ad0fc1035314
+  - extra_agents_to_spawn:
+    - - 664578.55
+      - 3999042.58
+      - 0
+    goal:
+      left: 664567.07, 3999206.41
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    token: 2d754c5d1e325ba4
+  - extra_agents_to_spawn:
+    - - 664578.55
+      - 3999042.58
+      - 0
+    goal:
+      left: 664567.07, 3999206.41
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        cones:
+        - - 664583.73
+          - 3999071.91
+          - -1.54
+        - - 664583.11
+          - 3999074.39
+          - -1.54
+        - - 664582.43
+          - 3999077.35
+          - -1.54
+        config: a0
+    token: cfad48a855765482
+  - extra_agents_to_spawn:
+    - - 664418.07
+      - 3997723.95
+      - 0
+    goal:
+      left: 664385.35, 3997616.77
+      right: 664486.82, 3997505.52
+      straight: null
+    spawn_in_intersection: true
+    token: feb82815b92a5512
+  - extra_agents_to_spawn:
+    - - 365119.23
+      - 143392.12
+      - 0
+    - - 365129.0
+      - 143387.04
+      - 0
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    token: 4a43ee2c4df75661
+  - extra_agents_to_spawn:
+    - - 365123.67
+      - 143382.68
+      - 0
+    - - 365129.0
+      - 143387.04
+      - 0
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        stopped_vehicle:
+        - - 365107.17
+          - 143349.97
+          - -1.95
+    token: cd0e827efbe85a8f
+  - extra_agents_to_spawn:
+    - - 664418.37
+      - 3997722.05
+      - 0
+      - behavior: cautious
+        snap: true
+    goal:
+      left: 664423.69, 3997628.88
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        pedestrian:
+        - - 664419.99
+          - 3997762.84
+          - 664438.95
+          - 3997762.36
+        stopped_bus:
+        - - 664421.4
+          - 3997652.27
+          - -1.54
+        stopped_vehicle:
+        - - 664421.55
+          - 3997677.18
+          - -1.54
+        - - 664421.1
+          - 3997669.14
+          - -1.54
+    token: 5eb9b51ebe1758df
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        pedestrian:
+        - - 365420.6
+          - 143949.66
+          - 365427.59
+          - 143949.83
+          - 70
+        - - 365418.51
+          - 143949.66
+          - 365429.59
+          - 143949.83
+          - 70
+        - - 365416.51
+          - 143953.66
+          - 365429.59
+          - 143953.83
+          - 70
+        stopped_bus:
+        - - 365421.39
+          - 143944.2
+          - 1.74533
+      '1':
+        pedestrian:
+        - - 365420.6
+          - 143949.66
+          - 365427.59
+          - 143949.83
+          - 50
+        - - 365418.51
+          - 143949.66
+          - 365429.59
+          - 143949.83
+          - 50
+        - - 365416.51
+          - 143953.66
+          - 365429.59
+          - 143953.83
+          - 50
+        stopped_bus:
+        - - 365421.39
+          - 143944.2
+          - 1.74533
+      '2':
+        pedestrian:
+        - - 365420.6
+          - 143949.66
+          - 365427.59
+          - 143949.83
+          - 100
+        - - 365418.51
+          - 143949.66
+          - 365429.59
+          - 143949.83
+          - 100
+        - - 365416.51
+          - 143953.66
+          - 365429.59
+          - 143953.83
+          - 100
+        stopped_bus:
+        - - 365421.39
+          - 143944.2
+          - 1.74533
+    token: 71f182558ee95100
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    roadblock_locations_to_spawn_agents:
+    - - 365395.63
+      - 143802.64
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        config: dh
+        stopped_vehicle:
+        - - 365393.1
+          - 143807.98
+          - 1.29
+      '1':
+        config: dh
+        roadblock_locations_to_spawn_agents: []
+        stopped_vehicle:
+        - - 365393.1
+          - 143807.98
+          - 1.29
+    token: 2d62c3139aa95007
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: true
+    special_scenario:
+      '0':
+        stopped_vehicle:
+        - - 365416.63
+          - 143884.74
+          - 3.1415
+        - - 365416.15
+          - 143880.73
+          - 1.74533
+      '1':
+        config: gr
+        stopped_vehicle:
+        - - 365417.88
+          - 143877.31
+          - 0.785398
+        - - 365419.53
+          - 143882.19
+          - -1.91533
+    token: c710330e5114501c
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: false
+    special_scenario:
+      '0':
+        cones:
+        - - 664434.93
+          - 3998307.44
+          - 0
+        - - 664434.93
+          - 3998297.44
+          - 0
+        - - 664439.93
+          - 3998302.44
+          - 0
+        - - 664430.93
+          - 3998302.44
+          - 0
+        - - 664437.93
+          - 3998305.44
+          - 0
+        - - 664437.93
+          - 3998299.44
+          - 0
+        - - 664431.93
+          - 3998305.44
+          - 0
+        - - 664431.93
+          - 3998299.44
+          - 0
+        config: dl
+    token: 5016a2a4ad1350d6
