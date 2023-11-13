@@ -1,5 +1,5 @@
 # @package _global_
-job_name: run_benchmark
+job_name: default_interplan_benchmark
 
 defaults:
   - override /observation: idm_modified_agents_observation
@@ -9,4 +9,4 @@ defaults:
   - override /metric_aggregator:
       - benchmark_weighted_average
   - override /scenario_filter: benchmark_scenarios
-  - override /scenario_builder: nuplan_modifications
+  - override /scenario_builder: interplan
