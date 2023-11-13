@@ -127,6 +127,9 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                     else: 
                         modifications_dict.add_scenario_specifics(scenario_specific_mod)
                         if scenario_filter.only_in_benchmark_scenarios:
+                            assert scenario_filter.scenario_tokens[idx] in scenario_filter.valid_tokens, (
+                                f"{scenario_filter.scenario_tokens[idx]} is not in the list of valid tokens."
+                            )
                             valid_tokens = scenario_filter.valid_tokens[f"{scenario_filter.scenario_tokens[idx]}"]
                             for modification in modifications_dict.dictionary:
                                 if modification in valid_tokens:
