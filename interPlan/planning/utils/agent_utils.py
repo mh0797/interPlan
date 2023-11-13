@@ -3,6 +3,7 @@ from shapely.geometry.base import CAP_STYLE
 from shapely.ops import unary_union
 import numpy as np
 import warnings
+import math
 warnings.filterwarnings('ignore', message="(.|\n)*invalid value encountered in line_locate_point")
 
 
@@ -14,11 +15,17 @@ from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_p
 
 
 def get_agent_constant_velocity_path(agent: Agent, seconds: float = 3) -> list[ProgressStateSE2]:
-    path = []
+    back_center_agent_point = StateSE2(agent.center.x + agent.box.half_length*math.cos(agent.center.heading + math.pi),
+                                        agent.center.y + agent.box.half_length*math.sin(agent.center.heading + math.pi),
+                                        agent.center.heading)
+    front_center_agent_point = StateSE2(agent.center.x + agent.box.half_length*math.cos(agent.center.heading),
+                                        agent.center.y + agent.box.half_length*math.sin(agent.center.heading),
+                                        agent.center.heading)
+    path = [StateSE2(*back_center_agent_point), StateSE2(*agent.center)]
     rotated_velocity = rotate_angle(StateSE2(agent.velocity.x, agent.velocity.y, agent.center.heading) , -agent.center.heading)
     for i in np.arange(0, seconds + 0.1, 0.1):
         path.append(
-            StateSE2(agent.center.x + i*rotated_velocity.x, agent.center.y + i*rotated_velocity.y, agent.center.heading)
+            StateSE2(front_center_agent_point.x + i*rotated_velocity.x, front_center_agent_point.y + i*rotated_velocity.y, agent.center.heading)
             )
     path: ProgressStateSE2 = convert_se2_path_to_progress_path(path)    
     return path

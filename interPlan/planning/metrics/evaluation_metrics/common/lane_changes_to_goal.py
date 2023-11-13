@@ -49,6 +49,7 @@ class LaneChangesToGoalStatistics(MetricBase):
     ) -> float:
         """Inherited, see superclass."""
         # Return between 1.0 and 0.0 where 1 is that ego go to lane goal and 0 didn't move from initial lane
+        if self.initial_number_of_lane_changes_to_goal == 0: return 1.0
         return max(0.0 , 1.0 - self.number_of_lane_changes_to_goal/self.initial_number_of_lane_changes_to_goal)
 
     def compute(self, history: SimulationHistory, scenario: AbstractScenario) -> List[MetricStatistics]:

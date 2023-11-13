@@ -25,6 +25,10 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     ScenarioExtractionInfo,
     extract_tracked_objects,
 )
+from nuplan.planning.metrics.utils.state_extractors import extract_ego_center
+from nuplan.planning.metrics.utils.route_extractor import (
+    get_route,
+    get_route_simplified,)
 from nuplan.planning.simulation.observation.observation_type import DetectionsTracks
 from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
 from nuplan.planning.simulation.trajectory.predicted_trajectory import PredictedTrajectory
@@ -35,6 +39,7 @@ from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject, Road
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
 from interPlan.planning.simulation.planner.utils.breadth_first_search_lane_goal import BreadthFirstSearch # TODO new name for this
+from interPlan.planning.scenario_builder.scenario_utils import ModificationsSerializableDictionary
 
 
 
@@ -58,11 +63,23 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 scenario_type, map_root, map_version, map_name, scenario_extraction_info,
                 ego_vehicle_parameters, sensor_root)
 
-        self._modification = modification # If scenario is modified
-        lookup_table = json.load(open(self._modification["lookup_table_path"]))
-        try: self.lookup_table = [elem for elem in lookup_table if elem["token"] == self.token][0]
-        except: self.lookup_table = None
+        
+        lookup_table = json.load(open(modification["lookup_table_path"]))
+        self.lookup_table = next((elem for elem in lookup_table if elem["token"] == self.token), None)
 
+        # Add modification attribute in case the scenario is modified
+        # If it is special scenario use the config of it
+        if "special_scenario" in modification and "config" in self.lookup_table["special_scenario"][modification["special_scenario"]]:
+            self.special_scenario_number = modification["special_scenario"]
+            new_config = self.lookup_table["special_scenario"][self.special_scenario_number]["config"]
+            modification = ModificationsSerializableDictionary(modification)
+            modification.reset_scenario_specifics()
+            modification.add_scenario_specifics(new_config+f"s{self.special_scenario_number}")
+            self.modification = modification.dictionary
+        else: 
+            self.modification = modification 
+        
+        self.route_roadblock_ids = self._get_route_roadblock_ids()
         self.initial_tracked_objects
 
     def __reduce__(self) -> Tuple[Type[NuPlanScenario], Tuple[Any, ...]]:
@@ -84,7 +101,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 self._scenario_extraction_info,
                 self._ego_vehicle_parameters,
                 self._sensor_root,
-                self._modification
+                self.modification
             ),
         )
     
@@ -96,17 +113,23 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         """Inherited, see superclass."""
         assert 0 <= iteration < self.get_number_of_iterations(), f"Iteration is out of scenario: {iteration}!"
         
-        if "density" in self._modification or "amount_of_agents" in self._modification:
-            # if there is modification use agents_modifier
+        if "density" in self.modification or "amount_of_agents" in self.modification or "special_scenario" in self.modification:
+            if not hasattr(self, "agents_modifier"):
+                self.agents_modifier = AgentsModifier(self.modification, 
+                                                    self.map_api, 
+                                                    self._log_file, 
+                                                    self._lidarpc_tokens, 
+                                                    self.lookup_table, 
+                                                    self.route_plan, 
+                                                    future_trajectory_sampling)
+                
             if iteration == 0:
-                tracked_objects = extract_tracked_objects(self._lidarpc_tokens[0], self._log_file, future_trajectory_sampling)  
-                agents_modifier = AgentsModifier(tracked_objects, self._modification, self.map_api, 
-                                                self._log_file, self._lidarpc_tokens[0], self.lookup_table) #TODO
-                self.ego_speed = agents_modifier.ego_speed 
-                return DetectionsTracks(TrackedObjects(agents_modifier.tracked_objects))
-            else:
-                return DetectionsTracks(AgentsModifier.delete_objects(
-                extract_tracked_objects(self._lidarpc_tokens[iteration], self._log_file, future_trajectory_sampling), delete_pedestrians=True))
+                tracked_objects = self.agents_modifier.get_tracked_objects_at_iteration(0)
+                self.ego_speed = self.agents_modifier.ego_speed # Agent_modifier defines ego speed according to position among spawned agents
+                return DetectionsTracks(tracked_objects)
+
+            return DetectionsTracks(self.agents_modifier.get_tracked_objects_at_iteration(iteration))
+
         else:
             return DetectionsTracks(
             extract_tracked_objects(self._lidarpc_tokens[iteration], self._log_file, future_trajectory_sampling)
@@ -128,7 +151,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             yield DetectionsTracks(tracked_objects)
     
     def get_ego_state_at_iteration(self, iteration: int) -> EgoState:
-        if "goal" in self._modification:
+        if "goal" in self.modification:
             if iteration == 0: 
                 initial_ego_state = get_ego_state_for_lidarpc_token_from_db(self._log_file, self._lidarpc_tokens[iteration])
                 if hasattr(self, "ego_speed"): initial_ego_state.dynamic_car_state.rear_axle_velocity_2d.x = self.ego_speed
@@ -141,9 +164,12 @@ class ModifiedNuPlanScenario(NuPlanScenario):
 
     @cached_property
     def get_modified_expert_trayectory(self) -> List[EgoState]:
+
         modified_expert_trayectory = []
         continue_bool = True
         initial_ego_state = self.initial_ego_state
+        if not hasattr(self, "route_plan"): self.get_route_roadblock_ids()
+
         for edge in self.route_plan:
             progress_baseline_path = convert_se2_path_to_progress_path(edge.baseline_path.discrete_path)
             if edge == self.route_plan[0]:
@@ -161,10 +187,9 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         return modified_expert_trayectory
 
     def get_route_roadblock_ids(self) -> List[str]:
-        return self._get_route_roadblocks_ids
+        return self.route_roadblock_ids
     
-    @cached_property
-    def _get_route_roadblocks_ids(self) -> List[str]:
+    def _get_route_roadblock_ids(self) -> List[str]:
         """Inherited, see superclass."""
 
         roadblock_ids = get_roadblock_ids_for_lidarpc_token_from_db(self._log_file, self._initial_lidar_token)
@@ -172,12 +197,12 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         roadblock_ids = cast(List[str], roadblock_ids)
 
         # Is there goal modification?
-        if "goal" in self._modification:
+        if "goal" in self.modification:
             # Goal direction
-            if self._modification["goal"] == "l":   direction = "left"
-            elif self._modification["goal"] == "r": direction = "right"
-            elif self._modification["goal"] == "s": direction = "straight"
-            else: raise ValueError(f"The letter \"{self._modification['goal']}\" is not an opcion for goal. Current options are: l, r, s")
+            if self.modification["goal"] == "l":   direction = "left"
+            elif self.modification["goal"] == "r": direction = "right"
+            elif self.modification["goal"] == "s": direction = "straight"
+            else: raise ValueError(f"The letter \"{self.modification['goal']}\" is not an opcion for goal. Current options are: l, r, s")
 
             # Goal in lookup table?
             if self.lookup_table: 
@@ -187,6 +212,8 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             # In case there is already a goal location, convert to float
             if self.goal_location: self.goal_location = [float(number) for number in self.goal_location.split(",")] # TODO simplify
         else:
+            expert_route: list([NuPlanLane]) = get_route(self.map_api, extract_ego_center(self.get_expert_ego_trajectory()))
+            self.route_plan = [element[0] for element in get_route_simplified(expert_route)]
             self.goal_location = None
             return roadblock_ids
         
@@ -253,10 +280,10 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                     angle = principal_value(edge.interior_edges[0].baseline_path.discrete_path[-1].heading)
                     angles.append(angle)
 
-                if self._modification["goal"] == "l":   idx = np.argmin([np.pi - abs(angle) for angle in angles])
-                elif self._modification["goal"] == "r": idx = np.argmin([abs(angle) for angle in angles])
-                elif self._modification["goal"] == "s": idx = np.argmin([(np.pi/2) - abs(angle) for angle in angles])
-                else: raise ValueError(f"The letter \"{self._modification['goal']}\" is not an opcion for goal. Current options are: l, r, s")
+                if self.modification["goal"] == "l":   idx = np.argmin([np.pi - abs(angle) for angle in angles])
+                elif self.modification["goal"] == "r": idx = np.argmin([abs(angle) for angle in angles])
+                elif self.modification["goal"] == "s": idx = np.argmin([(np.pi/2) - abs(angle) for angle in angles])
+                else: raise ValueError(f"The letter \"{self.modification['goal']}\" is not an opcion for goal. Current options are: l, r, s")
 
                 current_roadblock = edges[idx]
                 new_roadblocks_ids.append(current_roadblock.id)
@@ -299,7 +326,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         if not hasattr(self, "goal_location"):
             self.get_route_roadblock_ids()
 
-        if "goal" not in self._modification.keys():
+        if "goal" not in self.modification.keys():
             """Inherited, see superclass."""
             return get_mission_goal_for_sensor_data_token_from_db(
                 self._log_file, get_lidarpc_sensor_data(), self._initial_lidar_token
@@ -325,13 +352,15 @@ class ModifiedNuPlanScenario(NuPlanScenario):
 
     @property
     def scenario_name(self) -> str:
-        """Inherited, see superclass."""
-        string = ""
-        if "amount_of_agents" in self._modification: string+=f"a{self._modification['amount_of_agents']}"
-        if "density" in self._modification: string+=f"d{self._modification['density']}"
-        if "goal" in self._modification: string+=f"g{self._modification['goal']}"
-        
-        return self.token+"-"+string
+        """Inherited, see superclass."""        
+        return self.token + "-" + ModificationsSerializableDictionary(self.modification).to_string()
+    
+    @scenario_name.setter
+    def scenario_name(self, new_price):
+        if new_price > 0 and isinstance(new_price, float):
+            self._price = new_price
+        else:
+            print("Please enter a valid price")
     
     @cached_property
     def initial_tracked_objects(self) -> DetectionsTracks:

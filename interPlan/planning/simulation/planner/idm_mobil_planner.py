@@ -6,6 +6,7 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.geometry.base import CAP_STYLE
 from shapely.ops import unary_union
 import numpy as np
+from copy import copy
 import warnings
 warnings.filterwarnings('ignore', message="(.|\n)*invalid value encountered in line_locate_point")
 
@@ -36,6 +37,7 @@ from nuplan.planning.simulation.trajectory.predicted_trajectory import Predicted
 from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import STRTreeOccupancyMap
 
 from interPlan.planning.utils.agent_utils import get_agent_constant_velocity_geometry
+from interPlan.planning.scenario_builder.scenario_modifier.agents_modifier import ModifiedSceneObjectMetadata
 
 UniqueObjects = Dict[str, SceneObject]
 
@@ -105,6 +107,10 @@ class IDMMobilPlanner(AbstractIDMPlanner):
 
     def compute_planner_trajectory(self, current_input: PlannerInput) -> AbstractTrajectory:
         """Inherited, see superclass."""
+
+        # Adding past trayectory to past_trajectory attribute of agents for later acceleration calculation TODO Should this be here?
+        self.update_observations(current_input)
+
         # Ego current state
         ego_state, observations = current_input.history.current_state
 
@@ -112,33 +118,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
             self._initialize_ego_path(ego_state)
             self._initialized = True
 
-        # Adding past trayectory for later acceleration calculation
-        previous_ego_state = current_input.history.ego_states[-2]
-        for idx, actor in enumerate(observations.tracked_objects.tracked_objects):
-            if isinstance(actor, Agent) and not actor.tracked_object_type == TrackedObjectType.PEDESTRIAN:
-                previous_actor_state: Agent = current_input.history.observations[-2].tracked_objects.tracked_objects[idx]
-                if previous_actor_state.track_token != actor.track_token:
-                    tracked_objects = current_input.history.observations[-2].tracked_objects.tracked_objects    
-                    try:           
-                        previous_actor_state: Agent = \
-                        [tracked_object for tracked_object in tracked_objects if tracked_object.track_token == actor.track_token][0]
-                    except: 
-                        pass
-                
-                past_metadata = observations.tracked_objects.tracked_objects[idx]._metadata
-                observations.tracked_objects.tracked_objects[idx]._metadata = SceneObjectMetadata(ego_state.time_us,
-                                                                                                past_metadata.token,
-                                                                                                past_metadata.track_id,
-                                                                                                past_metadata.track_token,
-                                                                                                past_metadata.category_name)
-                observations.tracked_objects.tracked_objects[idx].past_trajectory = \
-                    PredictedTrajectory(1, [Waypoint(TimePoint(previous_ego_state.time_us), 
-                                                    previous_actor_state.box, previous_actor_state.velocity),
-                                            # Last waypoint timestamp is only the initial timestamp agents received as observations don't
-                                            # include time information 
-                                            Waypoint(actor._initial_time_stamp,   
-                                                     actor.box, actor.velocity)]
-                                        )
         # Create occupancy map
         occupancy_map, unique_observations = self._construct_occupancy_map(ego_state, observations)
 
@@ -147,6 +126,40 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         self._annotate_occupancy_map(traffic_light_data, occupancy_map)
 
         return self._get_planned_trajectory(ego_state, occupancy_map, unique_observations)
+    
+    def update_observations(self, current_input):
+        """ 
+        Takes the vehicles in the observation of current_input and change:
+            * The metadata of the vehicles so that it has the current timestamp
+            * The past trajectory attribute so to include the past waypoints     
+
+        This is done to be able to calculate acceleration of agents
+        """
+
+        ego_state, observations = current_input.history.current_state
+
+        previous_ego_state = current_input.history.ego_states[-2]
+        current_states = observations.tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE])
+        previous_states = current_input.history.observations[-2].tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE])
+
+        for idx, current_state in enumerate(current_states):
+
+            previous_state: Agent = next(iter([past for past in previous_states if past.track_token == current_state.track_token]), None)
+            if not previous_state: previous_state = current_state
+            
+            metadata = ModifiedSceneObjectMetadata.from_scene_object_metadata(previous_state.metadata, timestamp = TimePoint(ego_state.time_us))
+            past_trajectory = PredictedTrajectory(1, [  Waypoint(TimePoint(previous_ego_state.time_us), 
+                                                                            previous_state.box, 
+                                                                            previous_state.velocity
+                                                                ),
+                                                        Waypoint(current_state._initial_time_stamp,   
+                                                                current_state.box, 
+                                                                current_state.velocity
+                                                                )
+                                                    ] 
+                                                )
+            current_input.history.observations[-1].tracked_objects.tracked_objects[idx].past_trajectory = past_trajectory
+            current_input.history.observations[-1].tracked_objects.tracked_objects[idx]._metadata = metadata
 
     def _initialize_ego_path(self, ego_state: EgoState) -> None:
         """
@@ -510,7 +523,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         Do a graph search to return a ego path beginning from adjacent lane.
         :return: An interpolated path representing the ego's path.
         """
-
         # TODO not always is one before the current edge (lane.incoming_edges[0])
         graph_search = BreadthFirstSearch(lane.incoming_edges[0], self._candidate_lane_edge_ids)
         # Target depth needs to be offset by one if the starting edge belongs to the second roadblock in the list
@@ -560,6 +572,8 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         :param occupancy_map: OccupancyMap containing all objects in the scene.
         :param unique_observations: A mapping between the object token and the object itself.
         """
+        ego_idm_state = copy(ego_idm_state)
+
         adjacent_ego_path = self._get_ego_path_in_adjacent_lane(lane, ego_idm_state) 
         expanded_ego_path_in_adjacent_lane = self._get_expanded_ego_path_in_AL(ego_state, ego_idm_state, 
                                                                                           adjacent_ego_path)

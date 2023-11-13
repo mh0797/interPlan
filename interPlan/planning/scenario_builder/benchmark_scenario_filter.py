@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
 from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
+from interPlan.planning.scenario_builder.scenario_utils import ModificationsSerializableDictionary as ModDict
 
 
 @dataclass(frozen=True)
@@ -75,17 +76,23 @@ class BenchmarkScenarioFilter(ScenarioFilter):
             assert 0 < self.limit_total_scenarios, "limit_total_scenarios should be positive when integer"    
         
         if not self.scenario_tokens: self.get_all_possible_scenarios()
-        elif asterisk_index:= self.is_there_asterisk_in_mod():
-            for index in asterisk_index:
-                self.modifications["scenario_specifics"].pop(index)
-                self.modifications["scenario_specifics"].append(self.get_all_scenario_specifics(self.scenario_tokens[index]))
-    
+        else:
+            for i, o_token_mods in enumerate(self.modifications["scenario_specifics"]): # Original token
+                j = 0
+                while j < len(o_token_mods):
+                    if "*" not in o_token_mods[j]: 
+                        j+= 1
+                        continue
+                    for k, letter in enumerate(o_token_mods[j]):
+                        if k%2 == 1 and letter == "*":
+                            for option in self.valid_tokens[self.scenario_tokens[i]][ModDict.get_name_of_mod(o_token_mods[j][k-1])]:
+                                self.modifications["scenario_specifics"][i].append(o_token_mods[j][:k]+option+o_token_mods[j][k+1:])
+                    self.modifications["scenario_specifics"][i].pop(j)
 
     def get_all_possible_scenarios(self):
         self.scenario_tokens.clear()
         self.modifications["scenario_specifics"].clear()
         for token in self.valid_tokens:
-
             self.scenario_tokens.append(token)        
             self.modifications["scenario_specifics"].append(self.get_all_scenario_specifics(token))
                     
@@ -94,13 +101,9 @@ class BenchmarkScenarioFilter(ScenarioFilter):
         scenario_specific_modifications = []
 
         for goal_option in self.valid_tokens[token]["goal"]:
-            for density_option in self.valid_tokens[token]["density"]: # TODO add agent variations
-                scenario_specific_modifications.append("g"+goal_option+"d"+density_option)
+            for density_option in self.valid_tokens[token]["density"]: 
+                for observation_option in self.valid_tokens[token]["observation"]: # TODO add agent variations
+                    scenario_specific_modifications.append("g"+goal_option+"d"+density_option+"o"+observation_option)
                 
         return scenario_specific_modifications
-
-    def is_there_asterisk_in_mod(self) -> list:
-        return [index for index, mods in enumerate(self.modifications["scenario_specifics"]) if any(m == "*" for m in mods)]
-         
-        
 

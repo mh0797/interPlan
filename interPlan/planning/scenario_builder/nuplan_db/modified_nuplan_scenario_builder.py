@@ -16,19 +16,10 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     absolute_path_to_log_name,
 )
 from interPlan.planning.scenario_builder.nuplan_db.modified_nuplan_scenario import ModifiedNuPlanScenario
+from interPlan.planning.scenario_builder.scenario_utils import ModificationsSerializableDictionary
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_filter_utils import (
-    FilterWrapper,
     GetScenariosFromDbFileParams,
     ScenarioDict,
-    discover_log_dbs,
-    filter_ego_has_route,
-    filter_ego_starts,
-    filter_ego_stops,
-    filter_fraction_lidarpc_tokens_in_set,
-    filter_non_stationary_ego,
-    filter_num_scenarios_per_type,
-    filter_scenarios_by_timestamp,
-    filter_total_num_scenarios,
     get_scenarios_from_log_file,
     scenario_dict_to_list,
 )
@@ -134,7 +125,7 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                     if modification_category != "scenario_specifics":
                         modifications_dict.dictionary[modification_category] = scenario_filter.modifications[modification_category]
                     else: 
-                        modifications_dict.add_scenario_specific_modification(scenario_specific_mod)
+                        modifications_dict.add_scenario_specifics(scenario_specific_mod)
                         if scenario_filter.only_in_benchmark_scenarios:
                             valid_tokens = scenario_filter.valid_tokens[f"{scenario_filter.scenario_tokens[idx]}"]
                             for modification in modifications_dict.dictionary:
@@ -255,29 +246,3 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
 
     return scenario_dict
 
-
-class ModificationsSerializableDictionary():
-    def __init__(self, dictionary) -> None:
-        self.dictionary = dictionary
-
-    def add_scenario_specific_modification(self, string):
-        """
-        Add new entries to the dictionary from "scenario specifics"
-        """
-        assert isinstance(string, str), f"Class to be of type {str}, but is {type(string)}!"
-
-        for idx, letter in enumerate(string):
-            if idx % 2 != 0: continue # TODO this doesn't work if the amount of agents is more than one digit
-            if letter == "a": 
-                self.dictionary["amount_of_agents"] = int(string[idx+1])
-            elif letter == "d": 
-                self.dictionary["density"] = string[idx+1]
-            elif letter == "g": 
-                self.dictionary["goal"] = string[idx+1]
-    
-    def to_string(self) -> str:
-        string = ""
-        if "amount_of_agents" in self.dictionary: string+=f"a{self.dictionary['amount_of_agents']}"
-        if "density" in self.dictionary: string+=f"d{self.dictionary['density']}"
-        if "goal" in self.dictionary: string+=f"d{self.dictionary['goal']}"
-        return string

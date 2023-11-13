@@ -13,8 +13,8 @@ def preprocess_scenario_filter(cfg):
         "scenario_filter.modifications.scenario_specifics needs to be the same lenght as scenario_filter.scenario_tokens" # TODO change this 
     elif any(map(lambda token: "-" in token, tokens)):
         assert all(map(lambda token: "-" in token, tokens)), \
-        "Please enter either -all scenario_filter.scenario_tokens in either base format (5016a2a4ad1350d6) and \
-        change scenario_builder.modifications.scenario_specifics- or -all with modifications (5016a2a4ad1350d6-dmgl)-"
+        "Please enter either -> all scenario_filter.scenario_tokens in either base format (5016a2a4ad1350d6) and \
+        change scenario_builder.modifications.scenario_specifics <- or -> all with modifications (5016a2a4ad1350d6-dmgl) <-"
 
     # Modify the config
     if modifications is not list or (modifications is list and len(tokens) != len(modifications)):
@@ -29,6 +29,8 @@ def create_modifications_dictionary(tokens: list):
     for token in tokens:
         if not "-" in token: token = token + "-"
         split = token.split("-")
+        assert len(split[1]) % 2 == 0, f"Token format is not correct in token {token}: \
+            it should consist in pairs of letters-numbers or letters-letters"
         if split[0] not in modifications_dict: modifications_dict[split[0]] = []
         modifications_dict[split[0]].append(split[1])
     return modifications_dict

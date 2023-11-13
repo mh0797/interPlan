@@ -7,8 +7,8 @@ from nuplan.common.maps.maps_datatypes import TrafficLightStatusType
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
 from nuplan.planning.simulation.history.simulation_history_buffer import SimulationHistoryBuffer
 from nuplan.planning.simulation.observation.abstract_observation import AbstractObservation
-from interPlan.planning.simulation.observation.idm.idm_cautious_agent_manager import IDMAgentManager
-from nuplan.planning.simulation.observation.idm.idm_agents_builder import build_idm_agents_on_map_rails
+from interPlan.planning.simulation.observation.idm.idm_modified_agent_manager import IDMAgentManager
+from interPlan.planning.simulation.observation.idm.idm_modified_agents_builder import build_idm_agents
 from nuplan.planning.simulation.observation.observation_type import DetectionsTracks, Observation
 from nuplan.planning.simulation.simulation_time_controller.simulation_iteration import SimulationIteration
 
@@ -31,6 +31,8 @@ class IDMAgents(AbstractObservation):
         planned_trajectory_samples: Optional[int] = None,
         planned_trajectory_sample_interval: Optional[float] = None,
         radius: float = 100,
+        IDM_agents_behavior: str = "egoist",
+        
     ):
         """
         Constructor for IDMAgents
@@ -65,6 +67,8 @@ class IDMAgents(AbstractObservation):
         self._idm_agent_manager: Optional[IDMAgentManager] = None
         self._initialize_open_loop_detection_types(open_loop_detections_types)
 
+        self.IDM_agents_behavior = IDM_agents_behavior
+
     def reset(self) -> None:
         """Inherited, see superclass."""
         self.current_iteration = 0
@@ -88,7 +92,7 @@ class IDMAgents(AbstractObservation):
         :return: IDMAgentManager
         """
         if not self._idm_agent_manager:
-            agents, agent_occupancy = build_idm_agents_on_map_rails(
+            agents, agent_occupancy = build_idm_agents(
                 self._target_velocity,
                 self._min_gap_to_lead_agent,
                 self._headway_time,
@@ -98,7 +102,7 @@ class IDMAgents(AbstractObservation):
                 self._scenario,
                 self._open_loop_detections_types,
             )
-            self._idm_agent_manager = IDMAgentManager(agents, agent_occupancy, self._scenario.map_api)
+            self._idm_agent_manager = IDMAgentManager(agents, agent_occupancy, self._scenario.map_api, self.IDM_agents_behavior)
 
         return self._idm_agent_manager
 

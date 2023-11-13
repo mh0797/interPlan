@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.distance import cdist
 from shapely.geometry.base import CAP_STYLE
+import random
 
 from nuplan.common.actor_state.ego_state import EgoState
 from nuplan.common.actor_state.state_representation import StateSE2
@@ -13,14 +14,16 @@ from nuplan.common.geometry.convert import absolute_to_relative_poses
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.common.maps.abstract_map_objects import StopLine
 from nuplan.common.maps.maps_datatypes import SemanticMapLayer, TrafficLightStatusType
+from nuplan.common.maps.nuplan_map.utils import extract_roadblock_objects
 from nuplan.planning.metrics.utils.expert_comparisons import principal_value
-from nuplan.planning.simulation.observation.idm.idm_agent import IDMAgent
 from nuplan.planning.simulation.observation.idm.idm_states import IDMLeadAgentState
 from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
 from nuplan.planning.simulation.observation.observation_type import DetectionsTracks
 from nuplan.planning.simulation.occupancy_map.abstract_occupancy_map import OccupancyMap
 
 from interPlan.planning.utils.agent_utils import get_agent_constant_velocity_geometry
+from interPlan.planning.scenario_builder.scenario_modifier.agents_modifier import Behavior, ModifiedAgent, ModifiedSceneObjectMetadata
+from interPlan.planning.simulation.observation.idm.modified_idm_agent import IDMAgent
 
 UniqueIDMAgents = Dict[str, IDMAgent]
 
@@ -28,7 +31,7 @@ UniqueIDMAgents = Dict[str, IDMAgent]
 class IDMAgentManager:
     """IDM smart-agents manager."""
 
-    def __init__(self, agents: UniqueIDMAgents, agent_occupancy: OccupancyMap, map_api: AbstractMap):
+    def __init__(self, agents: UniqueIDMAgents, agent_occupancy: OccupancyMap, map_api: AbstractMap, IDM_agents_behavior: str):
         """
         Constructor for IDMAgentManager.
         :param agents: A dictionary pairing the agent's token to it's IDM representation.
@@ -38,6 +41,7 @@ class IDMAgentManager:
         self.agents: UniqueIDMAgents = agents
         self.agent_occupancy = agent_occupancy
         self._map_api = map_api
+        self.IDM_agents_behavior = IDM_agents_behavior
 
     def propagate_agents(
         self,
@@ -67,8 +71,17 @@ class IDMAgentManager:
 
         self._filter_agents_out_of_range(ego_state, radius)
 
+        ego_roadblock = extract_roadblock_objects(self._map_api, ego_state.center.point)[0] #TODO whatifconnector
+
+        assert ego_roadblock, "Ego is not in any route"
+
         for agent_token, agent in self.agents.items():
             if agent.is_active(iteration) and agent.has_valid_path():
+                agent_behavior = agent.agent.metadata.behavior if isinstance(agent.agent.metadata, ModifiedSceneObjectMetadata) else Behavior.DEFAULT
+                if agent_behavior == Behavior.STOPPED: 
+                    #agent.propagate(IDMLeadAgentState(progress=0.0, velocity=0.0, length_rear=0), tspan,)
+                    continue
+
                 agent.plan_route(traffic_light_status)
                 # Add stop lines into occupancy map if they are impacting the agent
                 stop_lines = self._get_relevant_stop_lines(agent, traffic_light_status)
@@ -81,12 +94,31 @@ class IDMAgentManager:
                     agent_path.buffer((agent.width / 2), cap_style=CAP_STYLE.flat)
                 )
                 assert intersecting_agents.contains(agent_token), "Agent's baseline does not intersect the agent itself"
+                
+                agent_lane = [lane for lane in agent.get_route() if lane.contains_point(agent.to_se2().point)][0]
 
-                # If ego is currently behind the agent then don't take into account ego expanded
-                if intersecting_agents.contains("ego_expanded") and \
-                    absolute_to_relative_poses([agent.to_se2(), ego_state.center])[1].x < 0:
-                    intersecting_agents.remove(["ego_expanded"])                
+                # According to the IDM behavior setting, the agents will consider the ego expanded path or not
+                if intersecting_agents.contains("ego_expanded"):
                     
+                    if agent_lane.contains_point(ego_state.center.point):
+                        intersecting_agents.remove(["ego_expanded"])
+                    elif (ego_roadblock.contains_point(agent.agent.center.point) and 
+                        not agent_lane.baseline_path.linestring.intersects(self.agent_occupancy.get("ego_expanded"))):
+
+                        if self.IDM_agents_behavior == "cautious" and \
+                        absolute_to_relative_poses([agent.to_se2(), ego_state.center])[1].x < 0:
+                            intersecting_agents.remove(["ego_expanded"])
+                        elif self.IDM_agents_behavior == "egoist":
+                            intersecting_agents.remove(["ego_expanded"])
+                        elif self.IDM_agents_behavior == "mixed" and random.randint(0, 1):
+                            intersecting_agents.remove(["ego_expanded"])
+                    elif self.IDM_agents_behavior == "standard":
+                        intersecting_agents.remove(["ego_expanded"])
+                    elif self.agent_occupancy.get("ego_expanded").intersects(agent.polygon):
+                        intersecting_agents.remove(["ego_expanded"])
+                    
+                    # TODO check this logic with the aditions of behavior properties to agents
+
                 # Checking if there are agents intersecting THIS agent's baseline.
                 # Hence, we are checking for at least 2 intersecting agents.
                 if intersecting_agents.size > 1:
@@ -95,7 +127,7 @@ class IDMAgentManager:
                     )
                     agent_heading = agent.to_se2().heading
 
-                    if "ego" in nearest_id:
+                    if "ego" in nearest_id and not agent_behavior == Behavior.CAUTIOUS:
                         ego_velocity = ego_state.dynamic_car_state.rear_axle_velocity_2d
                         longitudinal_velocity = np.hypot(ego_velocity.x, ego_velocity.y)
                         relative_heading = ego_state.rear_axle.heading - agent_heading
@@ -159,7 +191,12 @@ class IDMAgentManager:
         if len(self.agents) == 0:
             return
 
-        agents: npt.NDArray[np.int32] = np.array([agent.to_se2().point.array for agent in self.agents.values()])
+        agents_list = []
+        for agent in self.agents.values():
+            if not isinstance(agent, ModifiedAgent) or agent.agent.metadata.behavior == Behavior.DEFAULT:
+                agents_list.append(agent.to_se2().point.array)
+            else: agents_list.append(ego_state.center.point.array) # If agents are not of type default then they will never be filtered
+        agents: npt.NDArray[np.int32] = np.array(agents_list)
         distances = cdist(np.expand_dims(ego_state.center.point.array, axis=0), agents)
         remove_indices = np.argwhere(distances.flatten() > radius)
         remove_tokens = np.array(list(self.agents.keys()))[remove_indices.flatten()]

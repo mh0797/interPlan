@@ -1,4 +1,4 @@
-_target_: interPlan.planning.simulation.observation.idm_cautious_agents.IDMAgents
+_target_: interPlan.planning.simulation.observation.idm_modified_agents.IDMAgents
 _convert_: 'all'
 target_velocity: 10         # Desired velocity in free traffic [m/s]
 min_gap_to_lead_agent: 1.0  # Minimum relative distance to lead vehicle [m]
@@ -10,3 +10,4 @@ minimum_path_length: 20     # [m] The minimum path length to maintain
 planned_trajectory_samples: null # Number of elements to sample for the planned trajectory.
 planned_trajectory_sample_interval: null # [s] The time interval of sequence to sample from.
 radius: 100                 # [m] Only agents within this radius around the ego will be simulated.
+IDM_agents_behavior: egoist # Type of behavior that the IDM observations will have. [egoist, cautious, mixed, standard]
