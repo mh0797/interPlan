@@ -355,14 +355,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
     def scenario_name(self) -> str:
         """Inherited, see superclass."""        
         return self.token + "-" + ModificationsSerializableDictionary(self.modification).to_string()
-    
-    @scenario_name.setter
-    def scenario_name(self, new_price):
-        if new_price > 0 and isinstance(new_price, float):
-            self._price = new_price
-        else:
-            print("Please enter a valid price")
-    
+       
     @cached_property
     def initial_tracked_objects(self) -> DetectionsTracks:
         """
