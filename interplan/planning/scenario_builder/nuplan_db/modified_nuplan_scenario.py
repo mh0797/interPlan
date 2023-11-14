@@ -40,6 +40,7 @@ from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
 from interplan.planning.simulation.planner.utils.breadth_first_search_lane_goal import BreadthFirstSearch # TODO new name for this
 from interplan.planning.scenario_builder.scenario_utils import ModificationsSerializableDictionary
+from nuplan.planning.simulation.observation.idm.idm_agents_builder import get_starting_segment
 
 
 
@@ -219,22 +220,18 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             return roadblock_ids
         
         if self.goal_location:
-
+            
+            # Add candidate_lanes for route searching 
             proximal_roadblocks = self.map_api.get_proximal_map_objects(self.initial_ego_state.center, 300,
                                                                 [SemanticMapLayer.ROADBLOCK, SemanticMapLayer.ROADBLOCK_CONNECTOR])
             proximal_roadblocks = proximal_roadblocks[SemanticMapLayer.ROADBLOCK] + proximal_roadblocks[SemanticMapLayer.ROADBLOCK_CONNECTOR]
             candidate_lane_edge_ids = []
-            find_starting_roadblock = True
             for roadblock in proximal_roadblocks:
                 interior_edges = roadblock.interior_edges
                 # Adding lanes to candidate lanes (every lane near ego)
                 candidate_lane_edge_ids.extend([interior_edge.id for interior_edge in interior_edges])
-                # Finding the starting roadblock    
-                if find_starting_roadblock and roadblock.contains_point(self.initial_ego_state.center): 
-                    starting_roadblock = roadblock
-                    find_starting_roadblock = False
 
-            assert starting_roadblock, "Starting roadblock could not be found!"
+            starting_roadblock = get_starting_segment(self.initial_ego_state, self.map_api)[0].parent
 
             # Find Roadblock that corresponds to the goal
             try:

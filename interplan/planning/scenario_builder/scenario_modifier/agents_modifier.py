@@ -243,12 +243,12 @@ class AgentsModifier():
         # Add extra agents in lookup table to list to spawn
         if self.lookup_table and "extra_agents_to_spawn" in self.lookup_table:
             for agent in self.lookup_table["extra_agents_to_spawn"]:
-                if "snap" in agent[3] and agent[3]["snap"]: # Snap to route 
+                if len(agent) > 3 and "snap" in agent[3] and agent[3]["snap"]: # Snap to route 
                     lane = get_current_route_objects(self.map_api, StateSE2(*agent[0:2], 0))[0]
                     assert lane, "Trying to spawn an agent outside a road"
                     location = lane.baseline_path.get_nearest_pose_from_position(StateSE2(*agent[0:2],0))
-                else: location = StateSE2(*agent[0:1], 0)
-                agent_behavior = Behavior.DEFAULT if agent[3] == "default" else Behavior.CAUTIOUS
+                else: location = StateSE2(*agent[0:2], 0)
+                agent_behavior = Behavior.DEFAULT if len(agent) > 3 and agent[3]["behavior"] == "default" else Behavior.CAUTIOUS
                 self.add_agent_in_location(location, agent[2], behavior=agent_behavior)
 
     def extend_current_lane(self, lane) -> list(NuPlanLane):

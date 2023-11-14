@@ -139,8 +139,11 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         ego_state, observations = current_input.history.current_state
 
         previous_ego_state = current_input.history.ego_states[-2]
-        current_states = observations.tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE])
-        previous_states = current_input.history.observations[-2].tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE])
+        previous_observations = current_input.history.observations[-2]
+        current_states = observations.tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE, 
+                                                                                    TrackedObjectType.PEDESTRIAN])
+        previous_states = previous_observations.tracked_objects.get_tracked_objects_of_types([TrackedObjectType.VEHICLE, 
+                                                                                              TrackedObjectType.PEDESTRIAN])
 
         for idx, current_state in enumerate(current_states):
 
@@ -335,8 +338,10 @@ class IDMMobilPlanner(AbstractIDMPlanner):
             false_vehicle_progress = min(ego_idm_state.progress + 10, self._ego_path.get_end_progress())
             false_vehicle_state = self._ego_path.get_state_at_progress(false_vehicle_progress)
             false_vehicle_state = StateSE2(false_vehicle_state.x, false_vehicle_state.y, false_vehicle_state.heading) # Progress state isn't hashable
-            meters_until_intersection = current_lane.baseline_path.length - false_vehicle_progress
-            false_vehicle_velocity = StateVector2D((meters_until_intersection / current_lane.baseline_path.length) * self._policy.target_velocity, 0)
+            false_vehicle_in_lane_progress = current_lane.baseline_path.linestring.line_locate_point(Point(*false_vehicle_state))
+            meters_until_intersection = current_lane.baseline_path.length - false_vehicle_in_lane_progress
+            false_vehicle_velocity = \
+                StateVector2D((meters_until_intersection / current_lane.baseline_path.length) * self._policy.target_velocity, 0)
             ego_OB = ego_state.car_footprint
             false_vehicle_OB = OrientedBox(false_vehicle_state, ego_OB.length, ego_OB.width, ego_OB.height)
             occupancy_map.insert("false_vehicle", false_vehicle_OB.geometry)
