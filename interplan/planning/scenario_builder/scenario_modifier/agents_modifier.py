@@ -33,6 +33,7 @@ from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_p
 from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
 from nuplan.planning.metrics.utils.route_extractor import get_current_route_objects
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import extract_tracked_objects
+from nuplan.planning.simulation.observation.idm.idm_agents_builder import get_starting_segment
 from interplan.planning.utils.agent_utils import get_agent_constant_velocity_path
 
 
@@ -130,9 +131,21 @@ class AgentsModifier():
 
         map = STRTreeOccupancyMap({})
         for obj in self.tracked_objects:
-            if isinstance(obj, ModifiedAgent):
+            if isinstance(obj, Agent):
+                if not isinstance(obj, ModifiedAgent):
+                    # Snap to baseline
+                    route, _ = get_starting_segment(obj, self.map_api)
+                    if not route: continue
+                    state_on_path = route.baseline_path.get_nearest_pose_from_position(obj.center.point)
+                    box_on_baseline = OrientedBox.from_new_pose(
+                        obj.box, StateSE2(state_on_path.x, state_on_path.y, state_on_path.heading))  
+
+                    # Create agent with the new box
+                    obj = ModifiedAgent.from_new_oriented_box(obj, box_on_baseline)
+                # Insert in Map
                 map.insert(obj.track_token, path_to_linestring(obj.get_path_to_go(2)).buffer((obj._box.width / 2), cap_style=CAP_STYLE.flat))
-            else: map.insert(obj.track_token, obj._box.geometry)
+            else: 
+                map.insert(obj.track_token, obj._box.geometry)
         return map
 
     def delete_percentage_of_agents(self, percentage):

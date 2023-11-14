@@ -4,12 +4,13 @@ _convert_: 'all'
 scenario_types:  null                # List of scenario types to include
 scenario_tokens:                # List of scenario tokens to include
   - 71f182558ee95100-s0
-  - cd0e827efbe85a8f-s0
   - cfad48a855765482-s0
   - 2d62c3139aa95007-s0
   - c710330e5114501c-s0
   - c710330e5114501c-s1
   - 5016a2a4ad1350d6-s0
+  - 81f400b414215325-s0
+  - 948201ecfe2c560a-s0
 
 log_names: ${splitter.log_splits.test}  # Use all logs present in the test split
 map_names: null                     # Filter scenarios by map names
@@ -35,9 +36,11 @@ valid_tokens: {                      # Tokens included in the benchmark and thei
   5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
   cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
   71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
-  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
+  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
   5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
-  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]}}
+  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]},
+  81f400b414215325: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
+  c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]}}
 
 modifications:
   accel_max: ${oc.select:observation.accel_max, 1}
@@ -278,11 +281,11 @@ modifications:
       '1':
         config: gr
         stopped_vehicle:
-        - - 365417.88
-          - 143877.31
-          - 0.785398
-        - - 365419.53
-          - 143882.19
+        - - 365416.95
+          - 143878.37
+          - 2.0944
+        - - 365419.38
+          - 143881.56
           - -1.91533
     token: c710330e5114501c
   - extra_agents_to_spawn: []
@@ -320,3 +323,29 @@ modifications:
           - 0
         config: dl
     token: 5016a2a4ad1350d6
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: false
+    special_scenario:
+      '0':
+        stopped_vehicle:
+        - - 365258.93
+          - 143655.67
+          - -2.91
+    token: 948201ecfe2c560a
+  - extra_agents_to_spawn: []
+    goal:
+      left: null
+      right: null
+      straight: null
+    spawn_in_intersection: false
+    special_scenario:
+      '0':
+        stopped_vehicle:
+        - - 365106.2
+          - 143350.05
+          - -1.95
+    token: 81f400b414215325

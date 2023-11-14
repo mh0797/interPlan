@@ -144,7 +144,6 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                     scenarios_modifications_dict[f"{scenario_filter.scenario_tokens[idx]}"].append(modifications_dict)
 
 
-
         map_parameters = [
             GetScenariosFromDbFileParams(
                 data_root=self._data_root,

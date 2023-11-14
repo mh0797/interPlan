@@ -9,5 +9,5 @@ setup(
     author_email="",
     description="",
     install_requires=[],
-    python_requires=">=3.9.18",
+    python_requires=">=3.9.12",
 )
