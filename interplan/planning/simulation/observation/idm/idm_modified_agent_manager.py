@@ -71,9 +71,7 @@ class IDMAgentManager:
 
         self._filter_agents_out_of_range(ego_state, radius)
 
-        ego_roadblock = extract_roadblock_objects(self._map_api, ego_state.center.point)[0] #TODO whatifconnector
-
-        assert ego_roadblock, "Ego is not in any route"
+        ego_roadblock = next(iter(extract_roadblock_objects(self._map_api, ego_state.center.point)), None)
 
         for agent_token, agent in self.agents.items():
             if agent.is_active(iteration) and agent.has_valid_path():
@@ -102,7 +100,7 @@ class IDMAgentManager:
                     
                     if agent_lane.contains_point(ego_state.center.point):
                         intersecting_agents.remove(["ego_expanded"])
-                    elif (ego_roadblock.contains_point(agent.agent.center.point) and 
+                    elif (ego_roadblock and ego_roadblock.contains_point(agent.agent.center.point) and 
                         not agent_lane.baseline_path.linestring.intersects(self.agent_occupancy.get("ego_expanded"))):
 
                         if self.IDM_agents_behavior == "cautious" and \

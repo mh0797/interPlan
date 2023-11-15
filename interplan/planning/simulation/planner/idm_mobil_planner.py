@@ -199,16 +199,10 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         desired_p_state = ProgressStateSE2(desired_ego_state.center.x - 0.5 * np.sign(current_ego_state.center.x - desired_ego_state.center.x),
                                             desired_ego_state.center.y, desired_ego_state.center.heading, 0) 
         threshold_to_change = 0.5 # seconds while ego will continue its path until its path change lanes TODO config
-        """ # Rotate velocity from ego coordinate system to global coordinate system
-        rotated_velocity = rotate_angle(StateSE2(current_ego_state.dynamic_car_state.center_velocity_2d.x,
-                                                 current_ego_state.dynamic_car_state.center_velocity_2d.y, 
-                                                 current_ego_state.center.heading) , -current_ego_state.center.heading)
-        # Create start manouver progress state 
-        start_manouver_point = Point(current_p_state.x + rotated_velocity.x * threshold_to_change,
-                                     current_p_state.y + rotated_velocity.y * threshold_to_change) """
-        start_manouver_point = self._ego_path.get_state_at_progress(current_ego_idm_state.progress + \
-                                                                    current_ego_state.dynamic_car_state.center_velocity_2d.x * threshold_to_change)
-        """ start_manouver_point = self.objective_lane.baseline_path.get_nearest_pose_from_position(start_manouver_point) """
+        start_manouver_progress = current_ego_idm_state.progress + \
+                                    current_ego_state.dynamic_car_state.center_velocity_2d.x * threshold_to_change
+        start_manouver_progress = min(self._ego_path.get_end_progress(), start_manouver_progress)
+        start_manouver_point = self._ego_path.get_state_at_progress(start_manouver_progress)
         SM_DPS_angle = principal_value(math.atan2(desired_p_state.y - start_manouver_point.y, desired_p_state.x - start_manouver_point.x))
         start_manouver_p_state = ProgressStateSE2(start_manouver_point.x, start_manouver_point.y, SM_DPS_angle,
                                                   current_ego_state.dynamic_car_state.center_velocity_2d.x * threshold_to_change)
@@ -631,9 +625,9 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         # Note: this could be done in a simpler way by making a list of agents in lanes but this would only work when follower vehicle
             #       is in the same lane as the ego.
         extended_occupancy_map = STRTreeOccupancyMap({})
-        for id in unique_observations:
-            if isinstance(unique_observations[id], Agent):
-                extended_occupancy_map.set(id, get_agent_constant_velocity_geometry(unique_observations[id]))
+        # Only take into account agents that are not false vehicle because false vehicle should never be behind of ego
+        for obs in [obs for id, obs in unique_observations.items() if isinstance(obs, Agent) and id != "false_vehicle"]:
+            extended_occupancy_map.set(obs.track_token, get_agent_constant_velocity_geometry(obs))
 
         intersecting_agents = extended_occupancy_map.intersects(ego_state.car_footprint.geometry)
 
