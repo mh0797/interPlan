@@ -85,6 +85,7 @@ class BenchmarkScenarioFilter(ScenarioFilter):
                         continue
                     for k, letter in enumerate(o_token_mods[j]):
                         if k%2 == 1 and letter == "*":
+                            assert o_token_mods[j][k-1] != "a", "Amount of Agents doesn't support asterisk as value"
                             for option in self.valid_tokens[self.scenario_tokens[i]][ModDict.get_name_of_mod(o_token_mods[j][k-1])]:
                                 self.modifications["scenario_specifics"][i].append(o_token_mods[j][:k]+option+o_token_mods[j][k+1:])
                     self.modifications["scenario_specifics"][i].pop(j)

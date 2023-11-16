@@ -71,8 +71,6 @@ class AgentsModifier():
                 log_file: str,
                 token_list: str,
                 lookup_table: dict = {},
-                ego_route_plan: list = [],
-                future_trajectory_sampling: bool = False
                 ) -> None:
 
         if not modification:
@@ -84,14 +82,12 @@ class AgentsModifier():
         random.seed(token_list[0])
         self.token_list = token_list
         self.log_file = log_file
-        self.future_trajectory_sampling = future_trajectory_sampling
         self.modification = modification
         self.lookup_table = lookup_table
         self.map_api = map_api
         self.ego_state: EgoState = get_ego_state_for_lidarpc_token_from_db(log_file, token_list[0])
         self.ego_speed = self.ego_state.dynamic_car_state.speed
-        self.ego_lane = self.get_ego_lane()
-        self.ego_route_plan = ego_route_plan
+        self.ego_lane , _ = get_starting_segment(self.ego_state, self.map_api)
         self.dmax = modification["decel_max"] if "decel_max" in modification else 2
         self.acomf = modification["accel_max"] if "decel_max" in modification else 1
         self.deleted_agents =  []
@@ -104,7 +100,7 @@ class AgentsModifier():
 
     def get_tracked_objects_from_db_at_iteration(self, iteration: int) -> TrackedObjects:
 
-        return extract_tracked_objects(self.token_list[iteration], self.log_file, self.future_trajectory_sampling)
+        return extract_tracked_objects(self.token_list[iteration], self.log_file, False)
     
     def get_example_agent(self):
         """ Get agent which will serve as a blueprint to spawn agents when there are no deleted agents """
@@ -115,17 +111,6 @@ class AgentsModifier():
             if example_agent: return example_agent
         
         AssertionError("No Agents in this log file")
-
-    def get_ego_lane(self):
-        # Get current route objects
-        current_route_objects = get_current_route_objects(self.map_api, self.ego_state.center.point) 
-        # Assert that ego is in a lane /-connector
-        assert current_route_objects, "Ego is not currently in any drivable surface"
-        # If there are multiple lanes under ego, return the one on route
-        if len(current_route_objects) == 1: return current_route_objects[0]
-        elif hasattr(self, "ego_route_plan"): 
-            return [edge for edge in current_route_objects if edge.id in [edge.id for edge in self.ego_route_plan]][0]        
-        else: return current_route_objects[0]
 
     def get_extended_occupancy_map(self) -> STRTreeOccupancyMap:
 
@@ -414,6 +399,14 @@ class AgentsModifier():
         self.add_cones()
 
         return TrackedObjects(self.tracked_objects.tracked_objects)
+    
+    def get_initial_tracked_objects_and_ego_speed(self):
+        """
+        Calculates the first iteration and by doing that an ego speed is set acording to ego 
+        position among the new spawned agents
+        """
+        tracked_objects = self.get_tracked_objects_at_iteration(0)
+        return tracked_objects, self.ego_speed
     
     def add_pedestrians_at_iteration(self, iteration):
                                         

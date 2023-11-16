@@ -46,7 +46,7 @@ modifications:
   accel_max: ${oc.select:observation.accel_max, 1}
   decel_max: ${oc.select:observation.decel_max, 2}
   scenario_specifics: null
-  scenario_specific_modification: 
+  lookup_table: 
   - extra_agents_spawn_locations: []
     goal:
       left: 664444.96, 3998088.68
