@@ -3,10 +3,13 @@ import os
 from typing import List, Optional
 
 from hydra.utils import instantiate
-from omegaconf import DictConfig
-
-from nuplan.common.utils.distributed_scenario_filter import DistributedMode, DistributedScenarioFilter
-from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_builder import NuPlanScenarioBuilder
+from nuplan.common.utils.distributed_scenario_filter import (
+    DistributedMode,
+    DistributedScenarioFilter,
+)
+from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_builder import (
+    NuPlanScenarioBuilder,
+)
 from nuplan.planning.script.builders.metric_builder import build_metrics_engines
 from nuplan.planning.script.builders.observation_builder import build_observations
 from nuplan.planning.script.builders.planner_builder import build_planners
@@ -14,8 +17,12 @@ from nuplan.planning.script.builders.utils.utils_type import is_target_type
 from nuplan.planning.simulation.callback.abstract_callback import AbstractCallback
 from nuplan.planning.simulation.callback.metric_callback import MetricCallback
 from nuplan.planning.simulation.callback.multi_callback import MultiCallback
-from nuplan.planning.simulation.controller.abstract_controller import AbstractEgoController
-from nuplan.planning.simulation.observation.abstract_observation import AbstractObservation
+from nuplan.planning.simulation.controller.abstract_controller import (
+    AbstractEgoController,
+)
+from nuplan.planning.simulation.observation.abstract_observation import (
+    AbstractObservation,
+)
 from nuplan.planning.simulation.planner.abstract_planner import AbstractPlanner
 from nuplan.planning.simulation.runner.simulations_runner import SimulationRunner
 from nuplan.planning.simulation.simulation import Simulation
@@ -24,6 +31,7 @@ from nuplan.planning.simulation.simulation_time_controller.abstract_simulation_t
     AbstractSimulationTimeController,
 )
 from nuplan.planning.utils.multithreading.worker_pool import WorkerPool
+from omegaconf import DictConfig
 
 logger = logging.getLogger(__name__)
 
@@ -44,19 +52,21 @@ def build_simulations(
     :param pre_built_planners: List of pre-built planners to run in simulation.
     :return A dict of simulation engines with challenge names.
     """
-    logger.info('Building simulations...')
+    logger.info("Building simulations...")
 
     # Create Simulation object container
     simulations = list()
 
     # Retrieve scenarios
-    logger.info('Extracting scenarios...')
+    logger.info("Extracting scenarios...")
 
     # Only allow simulation with NuPlanScenarioBuilder except when the NUPLAN_SIMULATION_ALLOW_ANY_BUILDER environment variable is set to a non-zero value.
-    if not int(os.environ.get("NUPLAN_SIMULATION_ALLOW_ANY_BUILDER", "0")) and not is_target_type(
-        cfg.scenario_builder, NuPlanScenarioBuilder
-    ):
-        raise ValueError(f"Simulation framework only runs with NuPlanScenarioBuilder. Got {cfg.scenario_builder}")
+    if not int(
+        os.environ.get("NUPLAN_SIMULATION_ALLOW_ANY_BUILDER", "0")
+    ) and not is_target_type(cfg.scenario_builder, NuPlanScenarioBuilder):
+        raise ValueError(
+            f"Simulation framework only runs with NuPlanScenarioBuilder. Got {cfg.scenario_builder}"
+        )
 
     scenario_filter = DistributedScenarioFilter(
         cfg=cfg,
@@ -71,30 +81,32 @@ def build_simulations(
 
     metric_engines_map = {}
     if cfg.run_metric:
-        logger.info('Building metric engines...')
+        logger.info("Building metric engines...")
         metric_engines_map = build_metrics_engines(cfg=cfg, scenarios=scenarios)
-        logger.info('Building metric engines...DONE')
+        logger.info("Building metric engines...DONE")
     else:
-        logger.info('Metric engine is disable')
+        logger.info("Metric engine is disable")
 
-    logger.info('Building simulations from %d scenarios...', len(scenarios))
+    logger.info("Building simulations from %d scenarios...", len(scenarios))
 
     # Build a metric metadata file
     for scenario in scenarios:
-
         # Build planners
         if pre_built_planners is None:
-            if 'planner' not in cfg.keys():
-                raise KeyError('Planner not specified in config. Please specify a planner using "planner" field.')
+            if "planner" not in cfg.keys():
+                raise KeyError(
+                    'Planner not specified in config. Please specify a planner using "planner" field.'
+                )
 
             planners = build_planners(cfg.planner, scenario)
         else:
             planners = pre_built_planners
 
         for planner in planners:
-        
             # Ego Controller
-            ego_controller: AbstractEgoController = instantiate(cfg.ego_controller, scenario=scenario)
+            ego_controller: AbstractEgoController = instantiate(
+                cfg.ego_controller, scenario=scenario
+            )
 
             # Simulation Manager
             simulation_time_controller: AbstractSimulationTimeController = instantiate(
@@ -109,18 +121,27 @@ def build_simulations(
                     cfg.observation["IDM_agents_behavior"] = "egoistic"
 
             # Perception
-            observations: AbstractObservation = build_observations(cfg.observation, scenario=scenario)
+            observations: AbstractObservation = build_observations(
+                cfg.observation, scenario=scenario
+            )
 
             # Metric Engine
             metric_engine = metric_engines_map.get(scenario.scenario_type, None)
             if metric_engine is not None:
-                stateful_callbacks = [MetricCallback(metric_engine=metric_engine, worker_pool=callbacks_worker)]
+                stateful_callbacks = [
+                    MetricCallback(
+                        metric_engine=metric_engine, worker_pool=callbacks_worker
+                    )
+                ]
             else:
                 stateful_callbacks = []
 
             if "simulation_log_callback" in cfg.callback:
                 stateful_callbacks.append(
-                    instantiate(cfg.callback["simulation_log_callback"], worker_pool=callbacks_worker)
+                    instantiate(
+                        cfg.callback["simulation_log_callback"],
+                        worker_pool=callbacks_worker,
+                    )
                 )
 
             # Construct simulation and manager
@@ -138,5 +159,5 @@ def build_simulations(
             )
             simulations.append(SimulationRunner(simulation, planner))
 
-    logger.info('Building simulations...DONE!')
+    logger.info("Building simulations...DONE!")
     return simulations

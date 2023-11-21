@@ -1,32 +1,39 @@
-from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_builder import NuPlanScenarioBuilder
-from typing import Any, List, Optional, Tuple, Type, Union, cast
-from functools import partial
+import logging
 from collections import UserDict
-from nuplan.common.actor_state.vehicle_parameters import VehicleParameters
-from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
-from nuplan.planning.utils.multithreading.worker_utils import WorkerPool, worker_map
-from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
 from dataclasses import dataclass
+from functools import partial
+from typing import Any, List, Optional, Tuple, Type, Union, cast
 
+from nuplan.common.actor_state.vehicle_parameters import VehicleParameters
 from nuplan.database.nuplan_db.nuplan_scenario_queries import get_scenarios_from_db
-from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
-    DEFAULT_SCENARIO_NAME,
-    ScenarioMapping,
-    download_file_if_necessary,
-    absolute_path_to_log_name,
+from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
+from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_builder import (
+    NuPlanScenarioBuilder,
 )
-from interplan.planning.scenario_builder.nuplan_db.modified_nuplan_scenario import ModifiedNuPlanScenario
-from interplan.planning.scenario_builder.scenario_utils import ModificationsSerializableDictionary
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_filter_utils import (
     GetScenariosFromDbFileParams,
     ScenarioDict,
     get_scenarios_from_log_file,
     scenario_dict_to_list,
 )
+from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
+    DEFAULT_SCENARIO_NAME,
+    ScenarioMapping,
+    absolute_path_to_log_name,
+    download_file_if_necessary,
+)
+from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
+from nuplan.planning.utils.multithreading.worker_utils import WorkerPool, worker_map
 
-from omegaconf import DictConfig
-import logging
+from interplan.planning.scenario_builder.nuplan_db.modified_nuplan_scenario import (
+    ModifiedNuPlanScenario,
+)
+from interplan.planning.scenario_builder.scenario_utils import (
+    ModificationsSerializableDictionary,
+)
+
 logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class GetScenariosFromDbFileParams:
@@ -84,7 +91,9 @@ class GetScenariosFromDbFileParams:
 class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
     """Builder class for constructing modified nuPlan scenarios for training and simulation."""
 
-    def get_scenarios(self, scenario_filter: ScenarioFilter, worker: WorkerPool) -> List[AbstractScenario]:
+    def get_scenarios(
+        self, scenario_filter: ScenarioFilter, worker: WorkerPool
+    ) -> List[AbstractScenario]:
         """Implemented. See interface."""
         # Create scenario dictionary and series of filters to apply
         scenario_dict = self._create_scenarios(scenario_filter, worker)
@@ -95,54 +104,81 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
             scenario_dict = filter_wrapper.run(scenario_dict)
 
         scenario_list = scenario_dict_to_list(scenario_dict, shuffle=scenario_filter.shuffle)  # type: ignore
-        
+
         return scenario_list
-    
-    def _create_scenarios(self, scenario_filter: ScenarioFilter, worker: WorkerPool) -> ScenarioDict:
+
+    def _create_scenarios(
+        self, scenario_filter: ScenarioFilter, worker: WorkerPool
+    ) -> ScenarioDict:
         """
         Creates a scenario dictionary with scenario type as key and list of scenarios for each type.
         :param scenario_filter: Structure that contains scenario filtering instructions.
         :param worker: Worker pool for concurrent scenario processing.
         :return: Constructed scenario dictionary.
         """
-        allowable_log_names = set(scenario_filter.log_names) if scenario_filter.log_names is not None else None
+        allowable_log_names = (
+            set(scenario_filter.log_names)
+            if scenario_filter.log_names is not None
+            else None
+        )
 
-        assert len(scenario_filter.modifications["scenario_specifics"]) == len(scenario_filter.scenario_tokens) , \
-        "len(scenario_filter.scenario_tokens) == len(scenario_builder.modifications.scenario_specifics) "+ \
-        "should be true if nuplan_modifications is being used as the Scenario Builder" 
+        assert len(scenario_filter.modifications["scenario_specifics"]) == len(
+            scenario_filter.scenario_tokens
+        ), (
+            "len(scenario_filter.scenario_tokens) == len(scenario_builder.modifications.scenario_specifics) "
+            + "should be true if nuplan_modifications is being used as the Scenario Builder"
+        )
 
         scenarios_modifications_dict = {}
 
         for idx in range(len(scenario_filter.modifications["scenario_specifics"])):
+            for scenario_specific_mod in scenario_filter.modifications[
+                "scenario_specifics"
+            ][idx]:
+                delete_bool = False
 
-            for scenario_specific_mod in scenario_filter.modifications["scenario_specifics"][idx]: 
-
-                delete_bool = False 
-                
                 # Create a dictionary with the modifications of a single scenario
                 modifications_dict = ModificationsSerializableDictionary({})
-                for modification_category in scenario_filter.modifications.keys(): 
+                for modification_category in scenario_filter.modifications.keys():
                     if modification_category != "scenario_specifics":
-                        modifications_dict.dictionary[modification_category] = scenario_filter.modifications[modification_category]
-                    else: 
+                        modifications_dict.dictionary[
+                            modification_category
+                        ] = scenario_filter.modifications[modification_category]
+                    else:
                         modifications_dict.add_scenario_specifics(scenario_specific_mod)
                         if scenario_filter.only_in_benchmark_scenarios:
-                            assert scenario_filter.scenario_tokens[idx] in scenario_filter.valid_tokens, (
-                                f"{scenario_filter.scenario_tokens[idx]} is not in the list of valid tokens."
-                            )
-                            valid_tokens = scenario_filter.valid_tokens[f"{scenario_filter.scenario_tokens[idx]}"]
+                            assert (
+                                scenario_filter.scenario_tokens[idx]
+                                in scenario_filter.valid_tokens
+                            ), f"{scenario_filter.scenario_tokens[idx]} is not in the list of valid tokens."
+                            valid_tokens = scenario_filter.valid_tokens[
+                                f"{scenario_filter.scenario_tokens[idx]}"
+                            ]
                             for modification in modifications_dict.dictionary:
                                 if modification in valid_tokens:
-                                    if modifications_dict.dictionary[modification] not in valid_tokens[modification]:
+                                    if (
+                                        modifications_dict.dictionary[modification]
+                                        not in valid_tokens[modification]
+                                    ):
                                         delete_bool = True
-                                        logger.info("Deleting token "+modifications_dict.to_string()+" because it is not part of the benchmark") 
+                                        logger.info(
+                                            "Deleting token "
+                                            + modifications_dict.to_string()
+                                            + " because it is not part of the benchmark"
+                                        )
 
-                if not delete_bool:            
-                    # Create and add info of the scenario into a dictionary with multiple scenarios 
-                    if f"{scenario_filter.scenario_tokens[idx]}" not in scenarios_modifications_dict.keys(): 
-                        scenarios_modifications_dict[f"{scenario_filter.scenario_tokens[idx]}"] = []
-                    scenarios_modifications_dict[f"{scenario_filter.scenario_tokens[idx]}"].append(modifications_dict)
-
+                if not delete_bool:
+                    # Create and add info of the scenario into a dictionary with multiple scenarios
+                    if (
+                        f"{scenario_filter.scenario_tokens[idx]}"
+                        not in scenarios_modifications_dict.keys()
+                    ):
+                        scenarios_modifications_dict[
+                            f"{scenario_filter.scenario_tokens[idx]}"
+                        ] = []
+                    scenarios_modifications_dict[
+                        f"{scenario_filter.scenario_tokens[idx]}"
+                    ].append(modifications_dict)
 
         map_parameters = [
             GetScenariosFromDbFileParams(
@@ -160,10 +196,11 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                 sensor_root=self._sensor_root,
                 include_cameras=self._include_cameras,
                 verbose=self._verbose,
-                modifications=scenarios_modifications_dict
+                modifications=scenarios_modifications_dict,
             )
             for log_file in self._db_files
-            if (allowable_log_names is None) or (absolute_path_to_log_name(log_file) in allowable_log_names)
+            if (allowable_log_names is None)
+            or (absolute_path_to_log_name(log_file) in allowable_log_names)
         ]
 
         if len(map_parameters) == 0:
@@ -176,8 +213,11 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
         dicts = worker_map(worker, get_scenarios_from_log_file, map_parameters)
 
         return self._aggregate_dicts(dicts)
-    
-def get_scenarios_from_log_file(parameters: List[GetScenariosFromDbFileParams]) -> List[ScenarioDict]:
+
+
+def get_scenarios_from_log_file(
+    parameters: List[GetScenariosFromDbFileParams],
+) -> List[ScenarioDict]:
     """
     Gets all scenarios from a log file that match the provided parameters.
     :param parameters: The parameters to use for scenario extraction.
@@ -194,6 +234,7 @@ def get_scenarios_from_log_file(parameters: List[GetScenariosFromDbFileParams]) 
                 output_dict[key] += this_dict[key]
 
     return [output_dict]
+
 
 def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> ScenarioDict:
     """
@@ -223,12 +264,13 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
             scenario_dict[scenario_type] = []
 
         extraction_info = (
-            None if params.expand_scenarios else params.scenario_mapping.get_extraction_info(scenario_type)
+            None
+            if params.expand_scenarios
+            else params.scenario_mapping.get_extraction_info(scenario_type)
         )
 
         modifications = params.modifications[f"{row['token'].hex()}"]
         for modification in modifications:
-
             scenario_dict[scenario_type].append(
                 ModifiedNuPlanScenario(
                     data_root=params.data_root,
@@ -242,9 +284,8 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
                     scenario_extraction_info=extraction_info,
                     ego_vehicle_parameters=params.vehicle_parameters,
                     sensor_root=params.sensor_root,
-                    modification = modification,
+                    modification=modification,
                 )
             )
 
     return scenario_dict
-

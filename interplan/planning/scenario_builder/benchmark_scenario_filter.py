@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict
+
 from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
+
 from interplan.planning.scenario_builder.scenario_utils import (
     ModificationsSerializableDictionary as ModDict,
 )

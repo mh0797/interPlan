@@ -1,43 +1,32 @@
 from __future__ import annotations
-import random
-import math
-from typing import List, Optional, Dict
-import numpy as np
-from nuplan.common.actor_state.agent_state import AgentState
-from shapely import line_merge, MultiLineString, LineString
-from pandas import Series
-from shapely.geometry.base import CAP_STYLE
-from shapely.geometry import Point
+
 import logging
+import math
+import random
 from enum import Enum
+from typing import Dict, List, Optional
 
-
-from nuplan.common.maps.abstract_map import AbstractMap
-from nuplan.common.maps.maps_datatypes import SemanticMapLayer
-from nuplan.common.maps.nuplan_map.lane import NuPlanLane
-from nuplan.common.maps.nuplan_map.polyline_map_object import NuPlanPolylineMapObject
-from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject
+import numpy as np
+from nuplan.common.actor_state.agent import Agent
+from nuplan.common.actor_state.agent_state import AgentState
+from nuplan.common.actor_state.ego_state import EgoState
 from nuplan.common.actor_state.oriented_box import OrientedBox
+from nuplan.common.actor_state.scene_object import SceneObjectMetadata
+from nuplan.common.actor_state.state_representation import StateSE2, StateVector2D
+from nuplan.common.actor_state.static_object import StaticObject
 from nuplan.common.actor_state.tracked_objects import (
     TrackedObject,
     TrackedObjects,
     TrackedObjectType,
 )
-from nuplan.common.actor_state.static_object import StaticObject
-from nuplan.common.actor_state.agent import Agent
-from nuplan.common.actor_state.state_representation import StateSE2, StateVector2D
-from nuplan.common.actor_state.scene_object import SceneObjectMetadata
-from nuplan.common.actor_state.ego_state import EgoState
-
-from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import (
-    STRTreeOccupancyMap,
+from nuplan.common.maps.abstract_map import AbstractMap
+from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject
+from nuplan.common.maps.maps_datatypes import SemanticMapLayer
+from nuplan.common.maps.nuplan_map.lane import NuPlanLane
+from nuplan.common.maps.nuplan_map.polyline_map_object import NuPlanPolylineMapObject
+from nuplan.database.nuplan_db.nuplan_scenario_queries import (
+    get_ego_state_for_lidarpc_token_from_db,
 )
-from nuplan.planning.simulation.trajectory.predicted_trajectory import (
-    PredictedTrajectory,
-)
-from nuplan.planning.simulation.path.interpolated_path import InterpolatedPath
-from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
-from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
 from nuplan.planning.metrics.utils.route_extractor import get_current_route_objects
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     extract_tracked_objects,
@@ -45,10 +34,21 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
 from nuplan.planning.simulation.observation.idm.idm_agents_builder import (
     get_starting_segment,
 )
-from interplan.planning.utils.agent_utils import get_agent_constant_velocity_path
-from nuplan.database.nuplan_db.nuplan_scenario_queries import (
-    get_ego_state_for_lidarpc_token_from_db,
+from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
+from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import (
+    STRTreeOccupancyMap,
 )
+from nuplan.planning.simulation.path.interpolated_path import InterpolatedPath
+from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
+from nuplan.planning.simulation.trajectory.predicted_trajectory import (
+    PredictedTrajectory,
+)
+from pandas import Series
+from shapely import MultiLineString, line_merge
+from shapely.geometry import Point
+from shapely.geometry.base import CAP_STYLE
+
+from interplan.planning.utils.agent_utils import get_agent_constant_velocity_path
 
 logger = logging.getLogger(__name__)
 

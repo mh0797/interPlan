@@ -4,24 +4,24 @@ from typing import List, Optional, Set
 
 import numpy as np
 import numpy.typing as npt
-
 from nuplan.common.maps.abstract_map_objects import GraphEdgeMapObject
 from nuplan.common.maps.nuplan_map.lane import NuPlanLane
 from nuplan.common.maps.nuplan_map.lane_connector import NuPlanLaneConnector
-from nuplan.planning.metrics.evaluation_metrics.base.metric_base import MetricBase
-from nuplan.planning.metrics.metric_result import MetricStatistics, MetricStatisticsType, Statistic, TimeSeries
+from nuplan.planning.metrics.evaluation_metrics.base.metric_base import \
+    MetricBase
+from nuplan.planning.metrics.metric_result import (MetricStatistics,
+                                                   MetricStatisticsType,
+                                                   Statistic, TimeSeries)
 from nuplan.planning.metrics.utils.route_extractor import (
-    CornersGraphEdgeMapObject,
-    extract_corners_route,
-    get_common_or_connected_route_objs_of_corners,
-    get_outgoing_edges_obj_dict,
-    get_route,
-    get_route_simplified,
-    get_timestamps_in_common_or_connected_route_objs,
-)
-from nuplan.planning.metrics.utils.state_extractors import extract_ego_center, extract_ego_time_point
+    CornersGraphEdgeMapObject, extract_corners_route,
+    get_common_or_connected_route_objs_of_corners, get_outgoing_edges_obj_dict,
+    get_route, get_route_simplified,
+    get_timestamps_in_common_or_connected_route_objs)
+from nuplan.planning.metrics.utils.state_extractors import (
+    extract_ego_center, extract_ego_time_point)
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
-from nuplan.planning.simulation.history.simulation_history import SimulationHistory
+from nuplan.planning.simulation.history.simulation_history import \
+    SimulationHistory
 
 logger = logging.getLogger(__name__)
 

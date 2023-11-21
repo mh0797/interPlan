@@ -5,12 +5,26 @@ from nuplan.common.actor_state.tracked_objects import TrackedObject
 from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
 from nuplan.common.maps.maps_datatypes import TrafficLightStatusType
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
-from nuplan.planning.simulation.history.simulation_history_buffer import SimulationHistoryBuffer
-from nuplan.planning.simulation.observation.abstract_observation import AbstractObservation
-from interplan.planning.simulation.observation.idm.idm_modified_agent_manager import IDMAgentManager
-from interplan.planning.simulation.observation.idm.idm_modified_agents_builder import build_idm_agents
-from nuplan.planning.simulation.observation.observation_type import DetectionsTracks, Observation
-from nuplan.planning.simulation.simulation_time_controller.simulation_iteration import SimulationIteration
+from nuplan.planning.simulation.history.simulation_history_buffer import (
+    SimulationHistoryBuffer,
+)
+from nuplan.planning.simulation.observation.abstract_observation import (
+    AbstractObservation,
+)
+from nuplan.planning.simulation.observation.observation_type import (
+    DetectionsTracks,
+    Observation,
+)
+from nuplan.planning.simulation.simulation_time_controller.simulation_iteration import (
+    SimulationIteration,
+)
+
+from interplan.planning.simulation.observation.idm.idm_modified_agent_manager import (
+    IDMAgentManager,
+)
+from interplan.planning.simulation.observation.idm.idm_modified_agents_builder import (
+    build_idm_agents,
+)
 
 
 class IDMAgents(AbstractObservation):
@@ -32,7 +46,6 @@ class IDMAgents(AbstractObservation):
         planned_trajectory_sample_interval: Optional[float] = None,
         radius: float = 100,
         IDM_agents_behavior: str = "egoist",
-        
     ):
         """
         Constructor for IDMAgents
@@ -74,7 +87,9 @@ class IDMAgents(AbstractObservation):
         self.current_iteration = 0
         self._idm_agent_manager = None
 
-    def _initialize_open_loop_detection_types(self, open_loop_detections: List[str]) -> None:
+    def _initialize_open_loop_detection_types(
+        self, open_loop_detections: List[str]
+    ) -> None:
         """
         Initializes open-loop detections with the enum types from TrackedObjectType
         :param open_loop_detections: A list of open-loop detections types as strings
@@ -84,7 +99,9 @@ class IDMAgents(AbstractObservation):
             try:
                 self._open_loop_detections_types.append(TrackedObjectType[_type])
             except KeyError:
-                raise ValueError(f"The given detection type {_type} does not exist or is not supported!")
+                raise ValueError(
+                    f"The given detection type {_type} does not exist or is not supported!"
+                )
 
     def _get_idm_agent_manager(self) -> IDMAgentManager:
         """
@@ -102,7 +119,12 @@ class IDMAgents(AbstractObservation):
                 self._scenario,
                 self._open_loop_detections_types,
             )
-            self._idm_agent_manager = IDMAgentManager(agents, agent_occupancy, self._scenario.map_api, self.IDM_agents_behavior)
+            self._idm_agent_manager = IDMAgentManager(
+                agents,
+                agent_occupancy,
+                self._scenario.map_api,
+                self.IDM_agents_behavior,
+            )
 
         return self._idm_agent_manager
 
@@ -117,23 +139,34 @@ class IDMAgents(AbstractObservation):
     def get_observation(self) -> DetectionsTracks:
         """Inherited, see superclass."""
         detections = self._get_idm_agent_manager().get_active_agents(
-            self.current_iteration, self._planned_trajectory_samples, self._planned_trajectory_sample_interval
+            self.current_iteration,
+            self._planned_trajectory_samples,
+            self._planned_trajectory_sample_interval,
         )
         if self._open_loop_detections_types:
-            open_loop_detections = self._get_open_loop_track_objects(self.current_iteration)
+            open_loop_detections = self._get_open_loop_track_objects(
+                self.current_iteration
+            )
             detections.tracked_objects.tracked_objects.extend(open_loop_detections)
         return detections
 
     def update_observation(
-        self, iteration: SimulationIteration, next_iteration: SimulationIteration, history: SimulationHistoryBuffer
+        self,
+        iteration: SimulationIteration,
+        next_iteration: SimulationIteration,
+        history: SimulationHistoryBuffer,
     ) -> None:
         """Inherited, see superclass."""
         self.current_iteration = next_iteration.index
         tspan = next_iteration.time_s - iteration.time_s
-        traffic_light_data = self._scenario.get_traffic_light_status_at_iteration(self.current_iteration)
+        traffic_light_data = self._scenario.get_traffic_light_status_at_iteration(
+            self.current_iteration
+        )
 
         # Extract traffic light data into Dict[traffic_light_status, lane_connector_ids]
-        traffic_light_status: Dict[TrafficLightStatusType, List[str]] = defaultdict(list)
+        traffic_light_status: Dict[TrafficLightStatusType, List[str]] = defaultdict(
+            list
+        )
 
         for data in traffic_light_data:
             traffic_light_status[data.status].append(str(data.lane_connector_id))

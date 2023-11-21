@@ -1,17 +1,21 @@
+import math
+import warnings
+
+import numpy as np
 from shapely.geometry import Polygon
 from shapely.geometry.base import CAP_STYLE
 from shapely.ops import unary_union
-import numpy as np
-import warnings
-import math
+
 warnings.filterwarnings('ignore', message="(.|\n)*invalid value encountered in line_locate_point")
 
 
-from nuplan.common.actor_state.state_representation import StateSE2, ProgressStateSE2
 from nuplan.common.actor_state.agent import Agent
+from nuplan.common.actor_state.state_representation import (ProgressStateSE2,
+                                                            StateSE2)
 from nuplan.common.geometry.transform import rotate_angle
 from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
-from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
+from nuplan.planning.simulation.path.utils import \
+    convert_se2_path_to_progress_path
 
 
 def get_agent_constant_velocity_path(agent: Agent, seconds: float = 3) -> list[ProgressStateSE2]:
