@@ -51,7 +51,7 @@ class BenchmarkScenarioFilter(ScenarioFilter):
 
         # Add special scenarios
         for special_scenario in self.valid_tokens[token]["special_scenario"]:
-            scenario_specific_modifications.append("s" + special_scenario)
+            scenario_specific_modifications.append("s" + str(special_scenario))
 
         return scenario_specific_modifications
 

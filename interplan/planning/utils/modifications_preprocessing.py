@@ -5,7 +5,10 @@ def preprocess_scenario_filter(cfg):
     This needs to be done since the nuplan scenario_filter_builder don't accept tokens with modifications
     """
     modifications = cfg.scenario_filter.modifications.scenario_specifics
-    tokens = cfg.scenario_filter.scenario_tokens
+    tokens = cfg.scenario_filter.scenario_tokens 
+    
+    modifications = modifications if modifications else []
+    tokens = tokens if tokens else []
 
     # Assertions
     if all(map(lambda token: not "-" in token, tokens)): 
