@@ -2,26 +2,29 @@ import logging
 from typing import List, Optional, Tuple
 
 import numpy as np
-from tqdm import tqdm
-
 from nuplan.common.actor_state.agent import Agent
 from nuplan.common.actor_state.oriented_box import OrientedBox
-from nuplan.common.actor_state.state_representation import StateSE2, StateVector2D
+from nuplan.common.actor_state.state_representation import (StateSE2,
+                                                            StateVector2D)
 from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
 from nuplan.common.maps.abstract_map import AbstractMap, SemanticMapLayer
 from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject
+from nuplan.planning.metrics.utils.route_extractor import \
+    get_current_route_objects
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
-from nuplan.planning.simulation.observation.idm.idm_agent_manager import UniqueIDMAgents
+from nuplan.planning.simulation.observation.idm.idm_agent_manager import \
+    UniqueIDMAgents
 from nuplan.planning.simulation.observation.idm.idm_policy import IDMPolicy
-from nuplan.planning.simulation.occupancy_map.abstract_occupancy_map import OccupancyMap
+from nuplan.planning.simulation.occupancy_map.abstract_occupancy_map import \
+    OccupancyMap
 from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import (
-    STRTreeOccupancyMap,
-    STRTreeOccupancyMapFactory,
-)
-from nuplan.planning.metrics.utils.route_extractor import get_current_route_objects
-from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import Behavior
-from interplan.planning.simulation.observation.idm.modified_idm_agent import IDMAgent, IDMInitialState
-from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import ModifiedAgent
+    STRTreeOccupancyMap, STRTreeOccupancyMapFactory)
+from tqdm import tqdm
+
+from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import (
+    Behavior, ModifiedAgent)
+from interplan.planning.simulation.observation.idm.modified_idm_agent import (
+    IDMAgent, IDMInitialState)
 
 logger = logging.getLogger(__name__)
 

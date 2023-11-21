@@ -1,7 +1,8 @@
 from collections import deque
 from typing import Dict, List, Optional, Tuple
 
-from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject, RoadBlockGraphEdgeMapObject
+from nuplan.common.maps.abstract_map_objects import (
+    LaneGraphEdgeMapObject, RoadBlockGraphEdgeMapObject)
 from nuplan.common.maps.nuplan_map.lane import NuPlanLane
 
 

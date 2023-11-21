@@ -1,28 +1,32 @@
 from dataclasses import dataclass
-from typing import List, Optional, Set, Tuple, Any
+from typing import Any, List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
-from sympy import symbols, solve
-
 from nuplan.common.actor_state.agent import Agent
 from nuplan.common.actor_state.ego_state import EgoState
 from nuplan.common.actor_state.oriented_box import OrientedBox, in_collision
 from nuplan.common.actor_state.state_representation import StateSE2
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.common.maps.maps_datatypes import SemanticMapLayer
-from nuplan.planning.metrics.evaluation_metrics.base.metric_base import MetricBase
-from nuplan.planning.metrics.evaluation_metrics.common.ego_lane_change import EgoLaneChangeStatistics
+from nuplan.planning.metrics.evaluation_metrics.base.metric_base import \
+    MetricBase
+from nuplan.planning.metrics.evaluation_metrics.common.ego_lane_change import \
+    EgoLaneChangeStatistics
 from nuplan.planning.metrics.evaluation_metrics.common.no_ego_at_fault_collisions import (
-    Collisions,
-    EgoAtFaultCollisionStatistics,
-)
-from nuplan.planning.metrics.metric_result import MetricStatistics, MetricStatisticsType, Statistic, TimeSeries
-from nuplan.planning.metrics.utils.state_extractors import extract_ego_time_point, extract_ego_velocity
+    Collisions, EgoAtFaultCollisionStatistics)
+from nuplan.planning.metrics.metric_result import (MetricStatistics,
+                                                   MetricStatisticsType,
+                                                   Statistic, TimeSeries)
+from nuplan.planning.metrics.utils.state_extractors import (
+    extract_ego_time_point, extract_ego_velocity)
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
-from nuplan.planning.simulation.history.simulation_history import SimulationHistory
-from nuplan.planning.simulation.observation.idm.utils import is_agent_ahead, is_agent_behind
+from nuplan.planning.simulation.history.simulation_history import \
+    SimulationHistory
+from nuplan.planning.simulation.observation.idm.utils import (is_agent_ahead,
+                                                              is_agent_behind)
 from nuplan.planning.simulation.observation.observation_type import Observation
+from sympy import solve, symbols
 
 # Typing for trajectory of tracks pose, speed and box
 TRACKS_POSE_SPEED_BOX = Tuple[
