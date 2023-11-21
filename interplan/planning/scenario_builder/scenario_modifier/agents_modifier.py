@@ -232,18 +232,16 @@ class AgentsModifier:
             self.mod_details
             and "roadblock_locations_to_spawn_agents" in self.mod_details
         ):
-            if not self.special_scenario:
-                locations = self.mod_details["roadblock_locations_to_spawn_agents"]
-            else:
-                if (
+            if (
+                self.special_scenario
+                and "roadblock_locations_to_spawn_agents"
+                in self.mod_details["special_scenario"][self.special_scenario]
+            ):
+                locations = self.mod_details["special_scenario"][self.special_scenario][
                     "roadblock_locations_to_spawn_agents"
-                    in self.mod_details["special_scenario"][self.special_scenario]
-                ):
-                    locations = self.mod_details["special_scenario"][
-                        self.special_scenario
-                    ]["roadblock_locations_to_spawn_agents"]
-                else:
-                    locations = self.mod_details["roadblock_locations_to_spawn_agents"]
+                ]
+            else:
+                locations = self.mod_details["roadblock_locations_to_spawn_agents"]
             for location in locations:
                 location = Point(*location)
                 roadblock = self.map_api.get_one_map_object(
@@ -265,7 +263,7 @@ class AgentsModifier:
                                 [lane.baseline_path._polyline for lane in list_of_lanes]
                             )
                         ),
-                        "fid": "7202",
+                        "fid": "7202",  # A number that is required for the init but it doesn't do anything
                     }
                 )
             )
@@ -445,11 +443,11 @@ class AgentsModifier:
                 agent = ModifiedAgent.from_new_pose(self.example_agent, location)
             # It's almost improbable that random returns a token which an agent already has
             agent._metadata = SceneObjectMetadata(
-                self.ego_state.scene_object_metadata.timestamp_us,
-                f"{random.randrange(16**16):=16x}",
-                self.max_track_id + 1,
-                f"{random.randrange(16**16):=16x}",
-                "vehicle",
+                timestamp_us=self.ego_state.scene_object_metadata.timestamp_us,
+                token=f"{random.randrange(16**16):=16x}",
+                track_id=self.max_track_id + 1,
+                track_token=f"{random.randrange(16**16):=16x}",
+                category_name="vehicle",
             )
             self.max_track_id += 1
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
 
@@ -37,22 +37,21 @@ class BenchmarkScenarioFilter(ScenarioFilter):
                 self.get_all_scenario_specifics(token)
             )
 
-    def get_all_scenario_specifics(self, token) -> list:
+    def get_all_scenario_specifics(self, token) -> List:
         scenario_specific_modifications = []
 
-        for goal_option in self.valid_tokens[token]["goal"]:
-            for density_option in self.valid_tokens[token]["density"]:
-                for observation_option in self.valid_tokens[token][
+        for goal in self.valid_tokens[token]["goal"]:
+            for density in self.valid_tokens[token]["density"]:
+                for observation in self.valid_tokens[token][
                     "observation"
                 ]:  # TODO add agent variations
                     scenario_specific_modifications.append(
-                        "g"
-                        + goal_option
-                        + "d"
-                        + density_option
-                        + "o"
-                        + observation_option
+                        "g" + goal + "d" + density + "o" + observation
                     )
+
+        # Add special scenarios
+        for special_scenario in self.valid_tokens[token]["special_scenario"]:
+            scenario_specific_modifications.append("s" + special_scenario)
 
         return scenario_specific_modifications
 
@@ -63,9 +62,12 @@ class BenchmarkScenarioFilter(ScenarioFilter):
         [feb82815b92a5512-g*] would be replaced to [feb82815b92a5512-gl, feb82815b92a5512-gs, feb82815b92a5512-gr]
         """
 
+        # Check that amount of agents don't include an asterisk since amount of agents is an percentage 
+        assert "a*" not in self.modifications["scenario_specifics"], "Amount of Agents doesn't support asterisk as value"
+
         for i, o_token_mods in enumerate(
             self.modifications["scenario_specifics"]
-        ):  # Original token
+        ):  # o_tokens_mods = Original token modifications e.g grdh
             j = 0
             while j < len(o_token_mods):
                 if "*" not in o_token_mods[j]:
@@ -73,9 +75,6 @@ class BenchmarkScenarioFilter(ScenarioFilter):
                     continue
                 for k, letter in enumerate(o_token_mods[j]):
                     if k % 2 == 1 and letter == "*":
-                        assert (
-                            o_token_mods[j][k - 1] != "a"
-                        ), "Amount of Agents doesn't support asterisk as value"
                         for option in self.valid_tokens[self.scenario_tokens[i]][
                             ModDict.get_name_of_mod(o_token_mods[j][k - 1])
                         ]:
