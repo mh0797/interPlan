@@ -13,7 +13,6 @@ from interplan.planning.utils.modifications_preprocessing import preprocess_scen
 # Location of path with all simulation configs
 nuplan_devkit_absolute_path = "/home/USER/nuplan-devkit" # For Example
 path_to_devkit = os.path.relpath(nuplan_devkit_absolute_path, Path(__file__).parent.resolve())
-lookup_table_path = Path(nuplan_devkit_absolute_path + "/Modifications_lookup_table.json")
 config_path = "nuplan/planning/script/config/simulation/"
 CONFIG_PATH = os.path.join(path_to_devkit, config_path)
 CONFIG_NAME = 'default_simulation'
@@ -33,7 +32,6 @@ CHALLENGE = 'run_benchmark'
 DATASET_PARAMS = [
     "scenario_filter=benchmark_scenarios",
     "scenario_filter.scenario_tokens=[71f182558ee95100-s0, cd0e827efbe85a8f-s0, cfad48a855765482-s0, 2d62c3139aa95007-s0, c710330e5114501c-s0, c710330e5114501c-s1, 5016a2a4ad1350d6-s0]",
-    f"scenario_filter.modifications.lookup_table_path={lookup_table_path}",
     "scenario_builder=nuplan_modifications",
 
     f"planner.pdm_open_planner.checkpoint_path={CHECKPOINT_PDM}",

@@ -1,26 +1,23 @@
 from __future__ import annotations
 import numpy as np
-from shapely import Point
+from shapely import Point, LineString
+from shapely.ops import split
 from functools import cached_property
+from pandas import Series
 
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario import NuPlanScenario
 from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import AgentsModifier
 
 
-from typing import Any, List, Optional, Tuple, Type, Dict, Union, cast, Generator
+from typing import Any, List, Optional, Tuple, Type, Dict
 
 from nuplan.common.geometry.compute import principal_value
-from nuplan.common.actor_state.tracked_objects import TrackedObjects
 from nuplan.common.actor_state.vehicle_parameters import VehicleParameters
 from nuplan.common.actor_state.ego_state import EgoState, StateSE2
 from nuplan.common.actor_state.state_representation import Point2D
 
-
-from nuplan.database.nuplan_db.nuplan_db_utils import get_lidarpc_sensor_data
 from nuplan.database.nuplan_db.nuplan_scenario_queries import ( 
     get_ego_state_for_lidarpc_token_from_db,
-    get_roadblock_ids_for_lidarpc_token_from_db,
-    get_mission_goal_for_sensor_data_token_from_db
     )
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     ScenarioExtractionInfo,
@@ -32,10 +29,9 @@ from nuplan.planning.metrics.utils.route_extractor import (
     get_route_simplified,)
 from nuplan.planning.simulation.observation.observation_type import DetectionsTracks
 from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
-from nuplan.planning.simulation.trajectory.predicted_trajectory import PredictedTrajectory
 from nuplan.common.maps.maps_datatypes import SemanticMapLayer
 from nuplan.common.maps.nuplan_map.lane import NuPlanLane
-from nuplan.common.maps.nuplan_map.lane_connector import NuPlanLaneConnector
+from nuplan.common.maps.nuplan_map.polyline_map_object import NuPlanPolylineMapObject
 from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject, RoadBlockGraphEdgeMapObject
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.planning.simulation.path.utils import convert_se2_path_to_progress_path
@@ -60,54 +56,75 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         scenario_extraction_info: Optional[ScenarioExtractionInfo],
         ego_vehicle_parameters: VehicleParameters,
         sensor_root: Optional[str] = None,
-        modification: dict = None,):
+        modification: Optional[ModificationsSerializableDictionary] = None,):
 
-        super().__init__(data_root, log_file_load_path, initial_lidar_token, initial_lidar_timestamp, \
-                scenario_type, map_root, map_version, map_name, scenario_extraction_info,
-                ego_vehicle_parameters, sensor_root)
+        super().__init__(
+            data_root=data_root,
+            log_file_load_path=log_file_load_path,
+            initial_lidar_token=initial_lidar_token, 
+            initial_lidar_timestamp=initial_lidar_timestamp, 
+            scenario_type=scenario_type, 
+            map_root=map_root, 
+            map_version=map_version, 
+            map_name=map_name, 
+            scenario_extraction_info=scenario_extraction_info,
+            ego_vehicle_parameters=ego_vehicle_parameters, 
+            sensor_root=sensor_root
+        )
 
-        # Set lookup table for this specific token
-        lookup_table = modification.pop("lookup_table")
-        self.lookup_table = next((elem for elem in lookup_table if elem["token"] == self.token), None)
+        if isinstance(modification, dict):
+            modification = ModificationsSerializableDictionary(modification)
+
+        # Set modification details dictionary for this specific token, this may include information like 
+        # the coordinates of the multiple goals that can be selected for the scenario or the special config for
+        # special scenarios
+        mod_details_dict = modification.dictionary.get("modification_details_dictionary")
+        self.mod_details = mod_details_dict.get(initial_lidar_token) if mod_details_dict else None
 
         self._map_modification_character_to_command = {
             "l": "left",
             "r": "right",
             "s": "straight",
         }
-        # Add modification attribute in case the scenario is modified
-        # If it is special scenario use the config of it
-        special_scenario_number = modification.get("special_scenario")
-        new_config = self.lookup_table["special_scenario"][special_scenario_number].get("config") if special_scenario_number else None
-        if new_config:
-            modification = ModificationsSerializableDictionary(modification)
+        
+        # If it is special scenario modify the variable modification, since special scenarios may include their own config parameters
+        special_scenario_number = modification.dictionary.get("special_scenario")
+        special_scenario_config = self.mod_details["special_scenario"][special_scenario_number].get("config") \
+                                    if special_scenario_number else None
+        if special_scenario_config:
             modification.reset_scenario_specifics()
-            modification.add_scenario_specifics(new_config+f"s{special_scenario_number}")
-            self.modification = modification.dictionary
-        else: 
-            self.modification = modification 
+            modification.add_scenario_specifics(special_scenario_config+f"s{special_scenario_number}")
+        
+        # Add modification attribute in case the scenario is modified this contains how the scenario should be change
+        # Eg. if it contains "goal":"left" then the new goal of the scenario should go to the left
+        self.modification: Dict = modification.dictionary 
         
         # Get goal location if necessary
-        if "goal" in modification:
-            command = self._map_modification_character_to_command[self.modification["goal"]]
-            if self.lookup_table and self.lookup_table.get("goal") and self.lookup_table["goal"].get(command):
+        if "goal" in modification.dictionary:
+            command = self._map_modification_character_to_command[modification.dictionary["goal"]]
+            if self.mod_details and self.mod_details.get("goal") and self.mod_details["goal"].get(command):
                 # lookup table contains a goal location for the current goal modification
-                goal_coords = self.lookup_table["goal"][command].split(",")
+                goal_coords = self.mod_details["goal"][command].split(",")
                 self.goal_location = Point2D(x=goal_coords[0], y=goal_coords[1])
-            else: self.goal_location = None
-        else: self.goal_location = None
+            else: 
+                self.goal_location = None
+        else: 
+            self.goal_location = None
 
         # Initialize agent modifier if necessary
-        if "density" in self.modification or "amount_of_agents" in self.modification or "special_scenario" in self.modification:
-            self.agents_modifier = AgentsModifier(self.modification, 
-                                                self.map_api, 
-                                                self._log_file, 
-                                                self._lidarpc_tokens, 
-                                                self.lookup_table)
-            _, self.ego_speed = self._get_initial_tracked_objects_and_ego_speed()
-        else: self.agents_modifier = None
+        if modification.augment_agents():
+            self.agents_modifier = AgentsModifier(modification.dictionary, 
+                self.map_api, 
+                self._log_file, 
+                self._lidarpc_tokens, 
+                self.mod_details
+            )
+            _, self.modified_initial_ego_speed = self._get_initial_tracked_objects_and_ego_speed()
+        else: 
+            self.agents_modifier = None
+            self.modified_initial_ego_speed = None
 
-        self.expert_route_roadblock_ids, self.expert_route_plan = self._initialize_expert_route_plan()
+        self.expert_route_roadblock_ids, self.expert_route_lane_sequence = self._initialize_expert_route_plan()
 
     def __reduce__(self) -> Tuple[Type[NuPlanScenario], Tuple[Any, ...]]:
         """
@@ -141,7 +158,9 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         assert 0 <= iteration < self.get_number_of_iterations(), f"Iteration is out of scenario: {iteration}!"
         
         if self.agents_modifier:
-            return DetectionsTracks(self.agents_modifier.get_tracked_objects_at_iteration(iteration))
+            return DetectionsTracks(
+                self.agents_modifier.get_tracked_objects_at_iteration(iteration)
+            )
         else:
             return DetectionsTracks(
             extract_tracked_objects(self._lidarpc_tokens[iteration], self._log_file, future_trajectory_sampling)
@@ -150,8 +169,8 @@ class ModifiedNuPlanScenario(NuPlanScenario):
     def _get_initial_tracked_objects_and_ego_speed(self):
         # Get initial Iteration
         # Agent_modifier defines ego speed according to position among spawned agents
-        tracked_objects, ego_speed = self.agents_modifier.get_initial_tracked_objects_and_ego_speed()
-        return DetectionsTracks(tracked_objects), ego_speed
+        tracked_objects, modified_ego_speed = self.agents_modifier.get_initial_tracked_objects_and_ego_speed()
+        return DetectionsTracks(tracked_objects), modified_ego_speed
     
     
     def get_ego_state_at_iteration(self, iteration: int) -> EgoState:
@@ -159,36 +178,40 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             if iteration == 0: 
                 initial_ego_state = get_ego_state_for_lidarpc_token_from_db(self._log_file, self._lidarpc_tokens[iteration])
                 # Set the new speed that ego should have if it spawn among new spawned agents
-                if hasattr(self, "ego_speed"): initial_ego_state.dynamic_car_state.rear_axle_velocity_2d.x = self.ego_speed
+                if self.modified_initial_ego_speed: 
+                    initial_ego_state.dynamic_car_state.rear_axle_velocity_2d.x = self.modified_initial_ego_speed
                 return initial_ego_state
-            index = int((len(self.get_modified_expert_trayectory)/self.get_number_of_iterations()) * iteration)
-            return self.get_modified_expert_trayectory[index]
-            # So that iteration = 0 -> index = 0 ... iteration = self.get_number_of_iterations() -> index = len(modified_expert_trayectory)
+            
+            # So that iteration = 0 -> index = 0 ... iteration = self.get_number_of_iterations() -> index = len(modified_expert_trajectory)
+            index = int((len(self.get_modified_expert_trajectory)/self.get_number_of_iterations()) * iteration)
+            return EgoState.build_from_center(self.get_modified_expert_trajectory[index],
+                self.initial_ego_state.dynamic_car_state.center_velocity_2d,
+                self.initial_ego_state.dynamic_car_state.center_acceleration_2d,
+                self.initial_ego_state.tire_steering_angle,
+                self.initial_ego_state.time_point,
+                self.initial_ego_state.car_footprint.vehicle_parameters    
+            )     
         else:
             return super().get_ego_state_at_iteration(iteration)
 
     @cached_property
-    def get_modified_expert_trayectory(self) -> List[EgoState]:
+    def get_modified_expert_trajectory(self) -> List[EgoState]:
 
-        modified_expert_trayectory = []
+        modified_expert_trajectory = []
         initial_ego_state = self.initial_ego_state
 
-        for edge in self.expert_route_plan:
-            progress_baseline_path = convert_se2_path_to_progress_path(edge.baseline_path.discrete_path)
-            inital_ego_progress = self.expert_route_plan[0].baseline_path.linestring.project(Point(*initial_ego_state.center.point.array))
-            for state in progress_baseline_path:
-                # Skip states that are behind ego initial location
-                if edge.id == self.expert_route_plan[0].id:
-                    state_ego_progress = edge.baseline_path.linestring.project(Point(*state.point))
-                    if state_ego_progress < inital_ego_progress:
-                        continue
-                # Append ego states to modified_expert_trayectory
-                modified_expert_trayectory.append(EgoState.build_from_center(state, initial_ego_state.dynamic_car_state.center_velocity_2d,
-                                                                                    initial_ego_state.dynamic_car_state.center_acceleration_2d,
-                                                                                    initial_ego_state.tire_steering_angle,
-                                                                                    initial_ego_state.time_point,
-                                                                                    initial_ego_state.car_footprint.vehicle_parameters))
-        return modified_expert_trayectory
+        for edge in self.expert_route_lane_sequence:
+            # Shorten the initial edge so that it starts from ego intial location
+            if edge.id == self.expert_route_lane_sequence[0].id:
+                ego_pose_along_line = edge.baseline_path.get_nearest_pose_from_position(self.initial_ego_state.center)
+                geometry_collection  = split(edge.baseline_path.linestring, Point(*ego_pose_along_line).buffer(0.0001))
+                shortened_linestring = geometry_collection.geoms[-1]
+                edge = NuPlanPolylineMapObject(Series({"geometry":shortened_linestring,"fid":"7210"}))
+                modified_expert_trajectory.extend(edge.discrete_path)
+                continue
+            
+            modified_expert_trajectory.extend(edge.baseline_path.discrete_path)
+        return modified_expert_trajectory
 
     def get_route_roadblock_ids(self) -> List[str]:
         return self.expert_route_roadblock_ids
@@ -219,9 +242,9 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         if "goal" not in self.modification.keys():
             return super().get_mission_goal()
         elif self.goal_location:
-            return self.expert_route_plan[-1].baseline_path.get_nearest_pose_from_position(self.goal_location)
+            return self.expert_route_lane_sequence[-1].baseline_path.get_nearest_pose_from_position(self.goal_location)
         else:
-            return self.expert_route_plan[-1].baseline_path.discrete_path[-1]
+            return self.expert_route_lane_sequence[-1].baseline_path.discrete_path[-1]
 
     def _infer_route_plan_from_command(self, route_length: int, command:str) -> List[str]:
         angles_for_command = {
@@ -276,7 +299,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             assert len(goal_lane) <= 1, \
                 f"In scenario with token {self.token} the selected goal {goal_location} cannot be assigned to a single lane"
         
-            if goal_lane == None:
+            if not goal_lane:
                 nearest_id, _ = map_api.get_distance_to_nearest_map_object(goal_location, SemanticMapLayer.LANE)
                 goal_lane = [map_api.get_map_object(nearest_id, SemanticMapLayer.LANE)]
 
@@ -314,7 +337,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
 
         assert path_found, f"Could not find a path to the goal {goal_location} provided for scenario {self.token}" 
 
-        return list(set([edge.parent.id for edge in route_plan])), route_plan
+        return list(dict.fromkeys([edge.parent.id for edge in route_plan])), route_plan
 
     def _initialize_expert_route_plan(self) -> List[LaneGraphEdgeMapObject]:
         if "goal" in self.modification:

@@ -242,7 +242,7 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
                     scenario_extraction_info=extraction_info,
                     ego_vehicle_parameters=params.vehicle_parameters,
                     sensor_root=params.sensor_root,
-                    modification = modification.dictionary,
+                    modification = modification,
                 )
             )
 

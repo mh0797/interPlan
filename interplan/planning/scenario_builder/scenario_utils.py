@@ -38,5 +38,15 @@ class ModificationsSerializableDictionary():
         for name_of_mod in self.list_of_modifications.values():
             if name_of_mod in self.dictionary: self.dictionary.pop(name_of_mod)
 
+    def augment_agents(self) -> bool:
+        """
+        Returns True if there are modifications done to agents
+        """
+        return (
+            "density" in self.dictionary or 
+            "amount_of_agents" in self.dictionary or 
+            "special_scenario" in self.dictionary
+        )
+
     def __call__(self) -> dict:
         return self.dictionary
