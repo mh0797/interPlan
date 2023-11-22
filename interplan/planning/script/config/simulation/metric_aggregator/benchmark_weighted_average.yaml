@@ -17,4 +17,4 @@ closed_loop_reactive_agents_weighted_average:
     - drivable_area_compliance # This metric score can be 0 or 1 depending on whether ego drives outside the drivable area
     - ego_is_making_progress # This metric score can be 0 or 1 depending on whether ego makes progress more than a minimum threshold compared to expert's progress
     - driving_direction_compliance # This metric score can be 0 or 0.5 or 1 depending on how much ego drives in the opposite direction if any
-  challenge_name: run_benchmark
+  challenge_name: null

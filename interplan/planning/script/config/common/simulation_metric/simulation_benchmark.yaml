@@ -9,7 +9,7 @@ defaults:
       - ego_yaw_acceleration_statistics
       - ego_yaw_rate_statistics
       - ego_progress_along_expert_route_statistics
-      #- lane_changes_to_goal_statistics
+      - lane_changes_to_goal_statistics
   - high_level:  # High level metrics that depend on low level metrics, they can also rely on the previously called high level metrics
       - drivable_area_compliance_statistics
       - no_ego_at_fault_collisions_statistics

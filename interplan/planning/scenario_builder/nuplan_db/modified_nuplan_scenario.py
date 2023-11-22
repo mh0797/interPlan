@@ -238,7 +238,6 @@ class ModifiedNuPlanScenario(NuPlanScenario):
     @cached_property
     def get_modified_expert_trajectory(self) -> List[EgoState]:
         modified_expert_trajectory = []
-        initial_ego_state = self.initial_ego_state
 
         for edge in self.expert_route_lane_sequence:
             # Shorten the initial edge so that it starts from ego intial location
