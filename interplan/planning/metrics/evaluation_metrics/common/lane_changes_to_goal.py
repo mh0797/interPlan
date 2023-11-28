@@ -79,17 +79,6 @@ class LaneChangesToGoalStatistics(MetricBase):
         :return the amount of lane changed required at the end of the scenario to get to the goal.
         """
 
-        # Get the list of lane or lane_connectors associated to ego at each time instance
-        ego_route: list([NuPlanLane]) = get_route(
-            history.map_api, extract_ego_center(history.extract_ego_state)
-        )
-        ego_simplified_route = [
-            element[0] for element in get_route_simplified(ego_route)
-        ]
-        ego_simplified_route_roadblock_ids = [
-            lane.get_roadblock_id() for lane in ego_simplified_route
-        ]
-
         # Get the list of lane or lane_connectors associated to expert at each time instance
         expert_centers = extract_ego_center(
             scenario.get_ego_state_at_iteration(iteration)
@@ -99,21 +88,36 @@ class LaneChangesToGoalStatistics(MetricBase):
         expert_simplified_route = [
             element[0] for element in get_route_simplified(expert_route)
         ]
+        expert_simplified_route_lane_ids = [lane.id for lane in expert_simplified_route]
         expert_simplified_route_roadblock_ids = [
             lane.get_roadblock_id() for lane in expert_simplified_route
         ]
 
+        # Get the list of lane or lane_connectors associated to ego at each time instance
+        ego_route: list([NuPlanLane]) = get_route(
+            history.map_api, extract_ego_center(history.extract_ego_state)
+        )
+        ego_simplified_route = [
+            lane
+            for element in get_route_simplified(ego_route)
+            for lane in element
+            if len(element) == 1 or lane.id in expert_simplified_route_lane_ids
+        ]
+        ego_simplified_route_roadblock_ids = [
+            lane.get_roadblock_id() for lane in ego_simplified_route
+        ]
+
         # If ego didn't finish at the same roadblock as the expert find the lane it drove on route
-        if ego_simplified_route_roadblock_ids[-1] != expert_simplified_route_roadblock_ids[-1]:
+        if (
+            ego_simplified_route_roadblock_ids[-1]
+            != expert_simplified_route_roadblock_ids[-1]
+        ):
             for index, id in list(enumerate(expert_simplified_route_roadblock_ids))[
                 ::-1
             ]:
                 if id in ego_simplified_route_roadblock_ids:
-
                     # Last_expert_lane in roadblock droven by ego
-                    last_expert_lane = expert_simplified_route[
-                        index
-                    ]  
+                    last_expert_lane = expert_simplified_route[index]
                     # Find last ego lane on route
                     for index, id_ego in list(
                         enumerate(ego_simplified_route_roadblock_ids)
@@ -134,8 +138,10 @@ class LaneChangesToGoalStatistics(MetricBase):
             last_expert_lane = expert_simplified_route[-1]
             last_ego_lane_on_route = ego_simplified_route[-1]
 
-        self.initial_number_of_lane_changes_to_goal = self.get_number_of_lane_changes_to_goal(
-            ego_simplified_route[0], expert_simplified_route[0]
+        self.initial_number_of_lane_changes_to_goal = (
+            self.get_number_of_lane_changes_to_goal(
+                ego_simplified_route[0], expert_simplified_route[0]
+            )
         )
         self.number_of_lane_changes_to_goal = self.get_number_of_lane_changes_to_goal(
             last_expert_lane, last_ego_lane_on_route
@@ -173,8 +179,8 @@ class LaneChangesToGoalStatistics(MetricBase):
         current_lane: LaneGraphEdgeMapObject,
         goal_lane: LaneGraphEdgeMapObject,
     ) -> Dict[str, int]:
-        """ Copied and modified from llm_feature_builder should be imported once available """
-        
+        """Copied and modified from llm_feature_builder should be imported once available"""
+
         # If current and objective lanes are the same then number of lane changes is 0
         if current_lane.id == goal_lane.id:
             return 0
@@ -192,7 +198,9 @@ class LaneChangesToGoalStatistics(MetricBase):
                 lane_changes_for_lanes_in_roadbloack.update({lane.id: lane_changes})
             # get adjacent lanes, append if not in visited and not in queue
             for adj_lane in self.get_adjacent_lanes(lane):
-                if adj_lane and adj_lane.id == current_lane.id: # This doesn't work 21.11
+                if (
+                    adj_lane and adj_lane.id == current_lane.id
+                ):  # This doesn't work 21.11
                     return lane_changes + 1
                 elif (
                     adj_lane is not None
@@ -205,7 +213,7 @@ class LaneChangesToGoalStatistics(MetricBase):
         self,
         current_lane: LaneGraphEdgeMapObject,
     ) -> Tuple[LaneGraphEdgeMapObject]:
-        """ Copied from llm_feature_builder should be imported once available """
+        """Copied from llm_feature_builder should be imported once available"""
 
         def _filter_candidates(
             candidate_lanes: List[LaneGraphEdgeMapObject], side: str
