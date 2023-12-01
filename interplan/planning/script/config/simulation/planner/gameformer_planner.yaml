@@ -1,0 +1,6 @@
+gameformer_planner:
+  _target_: GameFormer_Planner.Planner.planner.Planner
+  _convert_: 'all'
+
+  model_path: ${oc.env:NUPLAN_EXP_ROOT}/checkpoints/gameformer_checkpoint.pth  # Path to trained model checkpoint
+  device: cpu  

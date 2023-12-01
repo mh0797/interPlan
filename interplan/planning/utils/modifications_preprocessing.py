@@ -11,10 +11,7 @@ def preprocess_scenario_filter(cfg):
     tokens = tokens if tokens else []
 
     # Assertions
-    if all(map(lambda token: not "-" in token, tokens)): 
-        assert len(modifications) == len(tokens), \
-        "scenario_filter.modifications.scenario_specifics needs to be the same lenght as scenario_filter.scenario_tokens" # TODO change this 
-    elif any(map(lambda token: "-" in token, tokens)):
+    if any(map(lambda token: "-" in token, tokens)):
         assert all(map(lambda token: "-" in token, tokens)), \
         "Please enter either -> all scenario_filter.scenario_tokens in either base format (5016a2a4ad1350d6) and \
         change scenario_builder.modifications.scenario_specifics <- or -> all with modifications (5016a2a4ad1350d6-dmgl) <-"
