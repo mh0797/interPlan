@@ -16,4 +16,4 @@ verbose: ${verbose}
 
 defaults:
   - vehicle_parameters: nuplan_vehicle_parameters
-  - scenario_mapping: nuplan_scenario_mapping
+  - scenario_mapping: interplan_scenario_mapping

@@ -266,7 +266,7 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
         extraction_info = (
             None
             if params.expand_scenarios
-            else params.scenario_mapping.get_extraction_info(scenario_type)
+            else params.scenario_mapping.get_extraction_info("modified_nuplan_scenario")
         )
 
         modifications = params.modifications[f"{row['token'].hex()}"]

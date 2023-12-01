@@ -616,7 +616,7 @@ class AgentsModifier:
         path: InterpolatedPath
         for path, metadata, delay in self.pedestrian_paths:
             progress = path.get_end_progress() * (
-                max(0, iteration - delay) / (150 - delay)
+                max(0, iteration - delay) / (len(self.token_list) - delay) # TODO the number depends on how long the scenario is 
             )
             pedestrian_location = StateSE2(
                 *path.get_state_at_progress(progress).serialize()
