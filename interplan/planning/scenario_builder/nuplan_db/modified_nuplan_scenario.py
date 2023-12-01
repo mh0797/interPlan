@@ -90,6 +90,11 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             "r": "right",
             "s": "straight",
         }
+        self._density_modification_character_to_command = {
+            "l": "low",
+            "m": "medium",
+            "h": "high",
+        }
 
         # If it is special scenario modify the variable modification, since special scenarios may include their own config parameters
         special_scenario_number = modification.dictionary.get("special_scenario")
@@ -452,3 +457,21 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             + "-"
             + ModificationsSerializableDictionary(self.modification).to_string()
         )
+
+    @property
+    def scenario_type(self) -> str:
+        """Inherited, see superclass."""
+        special_scenario_number = self.modification.get("special_scenario")
+        special_scenario_type = (
+            self.mod_details["special_scenario"][special_scenario_number].get("type")
+            if special_scenario_number
+            else None
+        )
+        traffic_density = self.modification.get("density")
+
+        if special_scenario_type:
+            return special_scenario_type
+        elif traffic_density:
+            return f"{self._density_modification_character_to_command[traffic_density]}_traffic_density"
+        else:
+            return "standard_modified_nuplan_scenario"

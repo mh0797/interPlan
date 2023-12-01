@@ -33,11 +33,11 @@ valid_tokens: {                      # Tokens included in the benchmark and thei
   cfad48a855765482: {goal: [l,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
   d480a5d2b0fe5fe6: {goal: [l,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
   feb82815b92a5512: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
-  5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
-  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
-  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
+  5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
+  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
+  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0,1,2]},
   948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
-  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
+  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
   2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]},
   81f400b414215325: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
   c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]}}
@@ -65,12 +65,14 @@ modifications:
       spawn_in_intersection: true
       special_scenario:
         '0':
+          type: overtake_parked_vehicle
           config: dh
           stopped_vehicle:
           - - 365393.1
             - 143807.98
             - 1.29
         '1':
+          type: overtake_parked_vehicle
           config: dh
           roadblock_locations_to_spawn_agents: []
           stopped_vehicle:
@@ -109,6 +111,7 @@ modifications:
       spawn_in_intersection: false
       special_scenario:
         '0':
+          type: approaching_construction_zone
           cones:
           - - 664434.93
             - 3998307.44
@@ -147,25 +150,6 @@ modifications:
         right: null
         straight: null
       spawn_in_intersection: true
-      special_scenario:
-        '0':
-          pedestrian:
-          - - 664419.99
-            - 3997762.84
-            - 664438.95
-            - 3997762.36
-            - 0
-          stopped_bus:
-          - - 664421.4
-            - 3997652.27
-            - -1.54
-          stopped_vehicle:
-          - - 664421.55
-            - 3997677.18
-            - -1.54
-          - - 664421.1
-            - 3997669.14
-            - -1.54
     71f182558ee95100:
       extra_agents_to_spawn: []
       goal:
@@ -175,6 +159,7 @@ modifications:
       spawn_in_intersection: true
       special_scenario:
         '0':
+          type: passing_stopped_bus
           pedestrian:
           - - 365420.6
             - 143949.66
@@ -196,6 +181,7 @@ modifications:
             - 143944.2
             - 1.74533
         '1':
+          type: passing_stopped_bus
           pedestrian:
           - - 365420.6
             - 143949.66
@@ -217,6 +203,7 @@ modifications:
             - 143944.2
             - 1.74533
         '2':
+          type: passing_stopped_bus
           pedestrian:
           - - 365420.6
             - 143949.66
@@ -246,6 +233,7 @@ modifications:
       spawn_in_intersection: false
       special_scenario:
         '0':
+          type: nudge_around_parked_vehicle
           stopped_vehicle:
           - - 365106.2
             - 143350.05
@@ -259,9 +247,10 @@ modifications:
       spawn_in_intersection: false
       special_scenario:
         '0':
+          type: nudge_around_parked_vehicle
           stopped_vehicle:
           - - 365258.93
-            - 143655.67
+            - 143656.6
             - -2.91
     be26ad0fc1035314:
       extra_agents_to_spawn:
@@ -282,6 +271,7 @@ modifications:
       spawn_in_intersection: true
       special_scenario:
         '0':
+          type: avoid_crashed_cars
           stopped_vehicle:
           - - 365416.63
             - 143884.74
@@ -290,6 +280,7 @@ modifications:
             - 143880.73
             - 1.74533
         '1':
+          type: avoid_crashed_cars
           config: gr
           stopped_vehicle:
           - - 365416.95
@@ -311,12 +302,6 @@ modifications:
         right: null
         straight: null
       spawn_in_intersection: true
-      special_scenario:
-        '0':
-          stopped_vehicle:
-          - - 365107.17
-            - 143349.97
-            - -1.95
     cfad48a855765482:
       extra_agents_to_spawn:
       - - 664578.55
@@ -329,6 +314,7 @@ modifications:
       spawn_in_intersection: true
       special_scenario:
         '0':
+          type: approaching_construction_zone
           cones:
           - - 664583.73
             - 3999071.91
