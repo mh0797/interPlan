@@ -4,5 +4,5 @@ urban_driver_planner:
   _recursive_: False
 
   model_config: ${urban_driver_model} # Dictionary key from existing planner model config (e.g. raster_model)
-  checkpoint_path: ???  # Path to trained model checkpoint
+  checkpoint_path: ${oc.env:NUPLAN_EXP_ROOT}/checkpoints/urbandriver_checkpoint.ckpt  # Path to trained model checkpoint
 
