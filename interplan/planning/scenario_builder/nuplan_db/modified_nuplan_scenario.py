@@ -362,6 +362,15 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         assert (
             path_found
         ), f"Could not find a path for the command {command} provided for scenario {self.token}"
+
+        # Make route plan as long as an expert going at the speed limit would go 
+        time = 0
+        for index, lane in enumerate(route_plan):
+            time += lane.baseline_path.length / (lane.speed_limit_mps or 15)
+            if time > self.duration_s.time_s:
+                route_plan = route_plan[:index+1] if index + 1 < len(route_plan) else route_plan
+                break
+
         return [r.id for r in route_roadblocks], route_plan
 
     def _infer_route_plan_from_goal_location(self, goal_location: Point2D) -> List[str]:
