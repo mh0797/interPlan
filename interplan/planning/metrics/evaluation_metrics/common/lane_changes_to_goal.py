@@ -103,6 +103,11 @@ class LaneChangesToGoalStatistics(MetricBase):
             for lane in element
             if len(element) == 1 or lane.id in expert_simplified_route_lane_ids
         ]
+
+        # Ego always starts where expert starts to avoid errors
+        if ego_simplified_route[0] != expert_simplified_route[0]:
+            ego_simplified_route.insert(0, expert_simplified_route[0]) 
+
         ego_simplified_route_roadblock_ids = [
             lane.get_roadblock_id() for lane in ego_simplified_route
         ]
@@ -140,7 +145,7 @@ class LaneChangesToGoalStatistics(MetricBase):
 
         self.initial_number_of_lane_changes_to_goal = (
             self.get_number_of_lane_changes_to_goal(
-                ego_simplified_route[0], expert_simplified_route[0]
+                ego_simplified_route[0], expert_simplified_route[1]
             )
         )
         self.number_of_lane_changes_to_goal = self.get_number_of_lane_changes_to_goal(

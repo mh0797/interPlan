@@ -431,10 +431,10 @@ class IDMMobilPlanner(AbstractIDMPlanner):
             self._route_roadblocks[-1], len(self._route_roadblocks[offset:])
         )
 
-        if not path_found:
+        """ if not path_found:
             logger.warning(
                 "IDMPlanner could not find valid path to the target roadblock. Using longest route found instead"
-            )
+            ) """
 
         return route_plan, path_found
 
