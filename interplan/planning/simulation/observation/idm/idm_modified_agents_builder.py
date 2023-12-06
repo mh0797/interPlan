@@ -195,11 +195,11 @@ def build_idm_agents(
 
     # Initialize occupancy map
     occupancy_map = STRTreeOccupancyMap({})
-    desc = "Converting detections to smart agents"
+    #desc = "Converting detections to smart agents"
 
     agent: Agent
     for agent in tqdm(
-        detections.tracked_objects.get_tracked_objects_of_type(TrackedObjectType.VEHICLE), desc=desc, leave=False
+        detections.tracked_objects.get_tracked_objects_of_type(TrackedObjectType.VEHICLE), leave=False
     ):
         # filter for only vehicles
         if agent.track_token not in unique_agents:
