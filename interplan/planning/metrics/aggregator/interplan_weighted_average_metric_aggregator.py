@@ -52,6 +52,11 @@ class InterplanWeightedAverageMetricAggregator(WeightedAverageMetricAggregator):
 
         final_score_metric_columns: metric_aggregator_dict_column = defaultdict(lambda: defaultdict())
         total_scenarios = sum(final_score_dicts['final_score']['num_scenarios'])
+        # To get weighted_total_scenarios
+        scenario_numbers = [self.scenario_type_weights[key] for key in final_score_dicts["final_score"]["scenario_type"]]
+        scenario_weights = final_score_dicts['final_score']['num_scenarios'] 
+        weighted_total_scenarios = sum([x * y for x, y in zip(scenario_numbers, scenario_weights)])
+
         # Column get only first index value
         common_columns = ['planner_name', 'aggregator_type']
         for final_score_column_name, columns in final_score_dicts.items():
@@ -77,7 +82,10 @@ class InterplanWeightedAverageMetricAggregator(WeightedAverageMetricAggregator):
                         total_values = None
                     else:
                         available_value_array: npt.NDArray[np.float64] = np.asarray(available_values)
-                        total_values = np.sum(available_value_array) / total_scenarios
+                        if key == "score":
+                            total_values = np.sum(available_value_array) / weighted_total_scenarios
+                        else:
+                            total_values = np.sum(available_value_array) / total_scenarios
 
                     final_score_metric_columns[final_score_column_name][key] = total_values
         return final_score_metric_columns
