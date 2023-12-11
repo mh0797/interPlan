@@ -61,11 +61,16 @@ class LaneChangesToGoalStatistics(MetricBase):
         """Inherited, see superclass."""
         # Return between 1.0 and 0.0 where 1 is that ego go to lane goal and 0 didn't move from initial lane
         if self.initial_number_of_lane_changes_to_goal == 0:
-            return 1.0
+            if self.number_of_lane_changes_to_goal == 0:
+                return 1.0
+            else:
+                return 0.5
+            
+        if not self.initial_number_of_lane_changes_to_goal: return 0.2607
         return max(
             0.0,
-            1.0
-            - self.number_of_lane_changes_to_goal
+            (1.0
+            - self.number_of_lane_changes_to_goal)
             / self.initial_number_of_lane_changes_to_goal,
         )
 
@@ -106,7 +111,7 @@ class LaneChangesToGoalStatistics(MetricBase):
 
         # Ego always starts where expert starts to avoid errors
         if ego_simplified_route[0] != expert_simplified_route[0]:
-            ego_simplified_route.insert(0, expert_simplified_route[0]) 
+            ego_simplified_route.insert(0, expert_simplified_route[0])
 
         ego_simplified_route_roadblock_ids = [
             lane.get_roadblock_id() for lane in ego_simplified_route
@@ -144,10 +149,17 @@ class LaneChangesToGoalStatistics(MetricBase):
             last_ego_lane_on_route = ego_simplified_route[-1]
 
         self.initial_number_of_lane_changes_to_goal = (
-            self.get_number_of_lane_changes_to_goal(
-                ego_simplified_route[0], expert_simplified_route[1]
+            (
+                self.get_number_of_lane_changes_to_goal(
+                    ego_simplified_route[0], expert_simplified_route[1]
+                )
             )
+            if len(expert_simplified_route) > 1 and
+            ego_simplified_route[0].get_roadblock_id()
+            == expert_simplified_route[1].get_roadblock_id()
+            else 0
         )
+
         self.number_of_lane_changes_to_goal = self.get_number_of_lane_changes_to_goal(
             last_expert_lane, last_ego_lane_on_route
         )
@@ -199,6 +211,7 @@ class LaneChangesToGoalStatistics(MetricBase):
         ]
         while queue:
             lane, lane_changes = queue.pop(0)
+            print(lane.id)
             if lane.id not in lane_changes_for_lanes_in_roadbloack.keys():
                 lane_changes_for_lanes_in_roadbloack.update({lane.id: lane_changes})
             # get adjacent lanes, append if not in visited and not in queue
