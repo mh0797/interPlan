@@ -108,7 +108,9 @@ class AgentsModifier:
             if first_tracked_objects
             else 1
         )
-        self.pedestrian_paths = []
+        self.pedestrians_list: List[
+            InterpolatedPath, SceneObjectMetadata, Optional[int]
+        ] = []
         self.cones = []
         self.example_agent = self.get_example_agent()
         self.special_scenario = (
@@ -523,12 +525,12 @@ class AgentsModifier:
                 )
         if (
             "pedestrian" in self.mod_details["special_scenario"][self.special_scenario]
-            and not self.pedestrian_paths
+            and not self.pedestrians_list
         ):
             for pedestrian in self.mod_details["special_scenario"][
                 self.special_scenario
             ]["pedestrian"]:
-                self.pedestrian_paths.append(
+                self.pedestrians_list.append(  # [Path, Metadata, Iteration to become active]
                     [
                         InterpolatedPath(
                             convert_se2_path_to_progress_path(
@@ -548,7 +550,6 @@ class AgentsModifier:
                         pedestrian[4],
                     ]
                 )
-        self.add_pedestrians_at_iteration(0)
         if (
             "cones" in self.mod_details["special_scenario"][self.special_scenario]
             and not self.cones
@@ -597,8 +598,6 @@ class AgentsModifier:
         self.tracked_objects = self.get_tracked_objects_from_db_at_iteration(iteration)
         # Delete Pedestrians from DB
         self.delete_objects(delete_pedestrians=True)
-        # Add pedestrians in case it is a special scenario
-        self.add_pedestrians_at_iteration(iteration)
         # Add cones in case it is a special scenario
         self.add_cones()
 
@@ -612,16 +611,53 @@ class AgentsModifier:
         tracked_objects = self.get_tracked_objects_at_iteration(0)
         return tracked_objects, self.modified_ego_speed
 
-    def add_pedestrians_at_iteration(self, iteration):
+    def get_pedestrians_at_iteration(self, iteration, ego_state: EgoState):
+        """
+        Get pedestrians depending on the iteration and ego state
+        """
         path: InterpolatedPath
-        for path, metadata, delay in self.pedestrian_paths:
+        pedestrians = []
+        ego_current_lane, ego_current_progress = get_starting_segment(
+            ego_state, self.map_api
+        )
+        for index, (path, metadata, iteration_to_activate) in enumerate(
+            self.pedestrians_list
+        ):
+            if not iteration_to_activate:
+                # Pedestrian initial progress along ego lane
+                pedestrian_initial_location = path.get_state_at_progress(0)
+                pedestrian_progress = ego_current_lane.baseline_path.linestring.project(
+                    Point(*pedestrian_initial_location.serialize())
+                )
+                # If pedestrian is not close to ego lane, add the distance from the last point of
+                # ego lane to the pedestrian
+                if (
+                    abs(pedestrian_progress - ego_current_lane.baseline_path.length)
+                    < 0.1
+                ):
+                    pedestrian_progress += pedestrian_initial_location.distance_to(
+                        ego_current_lane.baseline_path.discrete_path[-1]
+                    )
+
+                # If ego is 25 meters along the route where it will meet with pedestrian, pedestrian becomes active
+                if abs(pedestrian_progress - ego_current_progress) <= 50:
+                    iteration_to_activate = iteration
+                    self.pedestrians_list[index][2] = iteration
+                else:
+                    continue
+
+            # Get the progress, which will increase is constantly since iteration_to_activate
             progress = path.get_end_progress() * (
-                max(0, iteration - delay) / (len(self.token_list) - delay) # TODO the number depends on how long the scenario is 
+                min(
+                    max(0, iteration - iteration_to_activate)
+                    / min(iteration_to_activate + 150, len(self.token_list)),
+                    1,
+                )  # 15 seconds to cross the street
             )
             pedestrian_location = StateSE2(
                 *path.get_state_at_progress(progress).serialize()
             )
-            self.tracked_objects.tracked_objects.append(
+            pedestrians.append(
                 Agent(
                     tracked_object_type=TrackedObjectType.PEDESTRIAN,
                     oriented_box=OrientedBox(
@@ -634,6 +670,8 @@ class AgentsModifier:
                     metadata=metadata,
                 )
             )
+
+        return pedestrians
 
     def add_cones(self):
         for location, metadata in self.cones:

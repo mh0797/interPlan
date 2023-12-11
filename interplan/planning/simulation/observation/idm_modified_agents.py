@@ -82,6 +82,8 @@ class IDMAgents(AbstractObservation):
 
         self.IDM_agents_behavior = IDM_agents_behavior
 
+        self.ego_state = scenario.initial_ego_state
+
     def reset(self) -> None:
         """Inherited, see superclass."""
         self.current_iteration = 0
@@ -171,9 +173,9 @@ class IDMAgents(AbstractObservation):
         for data in traffic_light_data:
             traffic_light_status[data.status].append(str(data.lane_connector_id))
 
-        ego_state, _ = history.current_state
+        self.ego_state, _ = history.current_state
         self._get_idm_agent_manager().propagate_agents(
-            ego_state,
+            self.ego_state,
             tspan,
             self.current_iteration,
             traffic_light_status,
@@ -188,4 +190,11 @@ class IDMAgents(AbstractObservation):
         :return: A list of TrackedObjects.
         """
         detections = self._scenario.get_tracked_objects_at_iteration(iteration)
-        return detections.tracked_objects.get_tracked_objects_of_types(self._open_loop_detections_types)  # type: ignore
+        ol_detections = detections.tracked_objects.get_tracked_objects_of_types(self._open_loop_detections_types)  # type: ignore
+         
+         # Add pedestrians to detections
+        pedestrians = self._scenario.agents_modifier.get_pedestrians_at_iteration(
+            self.current_iteration, self.ego_state)
+        if pedestrians: ol_detections.extend(pedestrians)
+
+        return ol_detections
