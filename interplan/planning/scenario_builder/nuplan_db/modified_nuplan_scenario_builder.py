@@ -21,6 +21,7 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
     ScenarioMapping,
     absolute_path_to_log_name,
     download_file_if_necessary,
+    ScenarioExtractionInfo,
 )
 from nuplan.planning.scenario_builder.scenario_filter import ScenarioFilter
 from nuplan.planning.utils.multithreading.worker_utils import WorkerPool, worker_map
@@ -266,9 +267,17 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
         extraction_info = (
             None
             if params.expand_scenarios
-            else params.scenario_mapping.get_extraction_info("modified_nuplan_scenario")
+            else params.scenario_mapping.get_extraction_info(scenario_type)
         )
 
+        if extraction_info: 
+            extraction_info = ScenarioExtractionInfo(
+                scenario_name=extraction_info.scenario_name,
+                scenario_duration=30.0, # All modified scenarios will be 30 seconds long
+                extraction_offset=extraction_info.extraction_offset,
+                subsample_ratio=extraction_info.subsample_ratio,
+                )
+            
         modifications = params.modifications[f"{row['token'].hex()}"]
         for modification in modifications:
             scenario_dict[scenario_type].append(
