@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from collections import Generator
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Tuple, Type
-
+from pandas import Series
+from shapely import Point
+from shapely.ops import split
 import numpy as np
+from random import gauss
+
 from nuplan.common.actor_state.ego_state import EgoState, StateSE2
 from nuplan.common.actor_state.state_representation import Point2D
 from nuplan.common.actor_state.vehicle_parameters import VehicleParameters
+from nuplan.common.actor_state.tracked_objects import TrackedObjects
+from nuplan.common.actor_state.tracked_objects_types import TrackedObjectType
+from nuplan.common.actor_state.agent import Agent
 from nuplan.common.geometry.compute import principal_value
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.common.maps.abstract_map_objects import (
@@ -30,9 +38,6 @@ from nuplan.planning.simulation.observation.observation_type import \
     DetectionsTracks
 from nuplan.planning.simulation.trajectory.trajectory_sampling import \
     TrajectorySampling
-from pandas import Series
-from shapely import Point
-from shapely.ops import split
 
 from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import \
     AgentsModifier
@@ -40,6 +45,7 @@ from interplan.planning.scenario_builder.scenario_utils import \
     ModificationsSerializableDictionary
 from interplan.planning.simulation.planner.utils.breadth_first_search_lane_goal import \
     BreadthFirstSearch  # TODO new name for this
+
 
 
 class ModifiedNuPlanScenario(NuPlanScenario):
@@ -484,3 +490,36 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             return f"{self._density_modification_character_to_command[traffic_density]}_traffic_density"
         else:
             return "standard_modified_nuplan_scenario"
+        
+    def get_past_tracked_objects(
+        self,
+        iteration: int,
+        time_horizon: float,
+        num_samples: Optional[int] = None,
+        future_trajectory_sampling: Optional[TrajectorySampling] = None,
+    ) -> Generator[DetectionsTracks, None, None]:
+        """Inherited, see superclass."""
+        
+        initial_detections = self.get_tracked_objects_at_iteration(0)
+        vehicles = initial_detections.tracked_objects.get_tracked_objects_of_type(TrackedObjectType.VEHICLE)
+        vehicles = [(vehicle, *get_starting_segment(vehicle, self.map_api)) for vehicle in vehicles]
+        for sample_number in range(num_samples+1):
+            tracked_objects_list = []
+            for agent, lane, progress in vehicles:
+                # Update progress
+                progress -= agent.velocity.x * self.database_interval * (23 - sample_number) + gauss(0, 0.1)
+                # In case progress < 0: get previous lane
+                if progress < 0:
+                    candidate_lane = next(iter(lane.incoming_edges), None)
+                    if candidate_lane == None: 
+                        progress = 0
+                    else: 
+                        lane = candidate_lane
+                        progress = lane.baseline_path.length + progress
+                # Get pose from progress
+                position = lane.baseline_path.linestring.interpolate(progress)
+                pose = lane.baseline_path.get_nearest_pose_from_position(position)
+                # Create new agent from pose and add to list
+                new_agent = Agent.from_new_pose(agent, pose)
+                tracked_objects_list.append(new_agent)
+            yield DetectionsTracks(TrackedObjects(tracked_objects_list))

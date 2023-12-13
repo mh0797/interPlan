@@ -90,6 +90,7 @@ class AgentsModifier:
         self.modification = modification
         self.mod_details = modification_details_dictionary
         self.map_api = map_api
+        self.initial_tracked_objects = []
         self.ego_state: EgoState = get_ego_state_for_lidarpc_token_from_db(
             log_file, token_list[0]
         )
@@ -100,12 +101,12 @@ class AgentsModifier:
         self.dmax = modification["decel_max"] if "decel_max" in modification else 2
         self.acomf = modification["accel_max"] if "decel_max" in modification else 1
         self.deleted_agents = []
-        first_tracked_objects = self.get_tracked_objects_from_db_at_iteration(0)
+        initial_tracked_objects_from_db = self.get_tracked_objects_from_db_at_iteration(0)
         self.max_track_id = (
             max(
-                first_tracked_objects, key=lambda x: x.metadata.track_id
+                initial_tracked_objects_from_db, key=lambda x: x.metadata.track_id
             ).metadata.track_id
-            if first_tracked_objects
+            if initial_tracked_objects_from_db
             else 1
         )
         self.pedestrians_list: List[
@@ -572,10 +573,15 @@ class AgentsModifier:
         self.add_cones()
 
     def get_tracked_objects_at_iteration(self, iteration: int) -> TrackedObjects:
+
+        self.tracked_objects = self.get_tracked_objects_from_db_at_iteration(iteration)
+        # Delete Pedestrians and static objects
+        self.delete_objects(delete_pedestrians=True)
         if iteration == 0:
-            self.tracked_objects = self.get_tracked_objects_from_db_at_iteration(0)
-            # Delete Pedestrians and static objects
-            self.delete_objects(delete_pedestrians=True)
+            
+            if self.initial_tracked_objects: 
+                return self.initial_tracked_objects
+            
             # Filter agents by percentage
             if "amount_of_agents" in self.modification.keys():
                 self.delete_percentage_of_agents(self.modification["amount_of_agents"])
@@ -592,16 +598,13 @@ class AgentsModifier:
             if "special_scenario" in self.modification.keys():
                 self.spawn_agents_for_special_scenarios()
 
+            self.initial_tracked_objects = self.tracked_objects
             return self.tracked_objects
-
-        # Get Objects from DB
-        self.tracked_objects = self.get_tracked_objects_from_db_at_iteration(iteration)
-        # Delete Pedestrians from DB
-        self.delete_objects(delete_pedestrians=True)
-        # Add cones in case it is a special scenario
-        self.add_cones()
-
-        return TrackedObjects(self.tracked_objects.tracked_objects)
+        else:
+            # Add cones in case it is a special scenario
+            self.add_cones()
+            
+            return TrackedObjects(self.tracked_objects.tracked_objects)
 
     def get_initial_tracked_objects_and_ego_speed(self):
         """
