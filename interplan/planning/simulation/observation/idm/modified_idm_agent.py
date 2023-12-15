@@ -27,7 +27,7 @@ from shapely.geometry.base import CAP_STYLE
 from shapely.ops import unary_union
 
 from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import (
-    Behavior, ModifiedSceneObjectMetadata)
+    AgentBehavior, ModifiedSceneObjectMetadata)
 
 
 @dataclass(frozen=True)
@@ -250,7 +250,7 @@ class IDMAgent:
 
         if self._path is not None:
             # If it is stopped vehicle don't get state_at_progress because it return the snapped vehicle
-            if isinstance(self._initial_state.metadata, ModifiedSceneObjectMetadata) and self._initial_state.metadata.behavior == Behavior.STOPPED:
+            if isinstance(self._initial_state.metadata, ModifiedSceneObjectMetadata) and self._initial_state.metadata.behavior == AgentBehavior.STOPPED:
                 init_pose = self._initial_state.box.center
             else:
                 init_pose = self._path.get_state_at_progress(progress) 

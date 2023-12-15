@@ -44,7 +44,7 @@ from interplan.planning.scenario_builder.scenario_modifier.agents_modifier impor
 from interplan.planning.scenario_builder.scenario_utils import \
     ModificationsSerializableDictionary
 from interplan.planning.simulation.planner.utils.breadth_first_search_lane_goal import \
-    BreadthFirstSearch  # TODO new name for this
+    BreadthFirstSearch
 
 
 

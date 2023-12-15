@@ -25,7 +25,7 @@ from nuplan.planning.simulation.observation.abstract_observation import (
 )
 from nuplan.planning.simulation.planner.abstract_planner import AbstractPlanner
 from nuplan.planning.simulation.runner.simulations_runner import SimulationRunner
-from nuplan.planning.simulation.simulation import Simulation
+from interplan.planning.simulation.interplan_simulation import Simulation
 from nuplan.planning.simulation.simulation_setup import SimulationSetup
 from nuplan.planning.simulation.simulation_time_controller.abstract_simulation_time_controller import (
     AbstractSimulationTimeController,
@@ -68,6 +68,12 @@ def build_simulations(
             f"Simulation framework only runs with NuPlanScenarioBuilder. Got {cfg.scenario_builder}"
         )
 
+    observation_modification_character_to_command = {
+            "c": "CAUTIOUS",
+            "m": "MIXED",
+            "a": "ASSERTIVE",
+        }
+    
     scenario_filter = DistributedScenarioFilter(
         cfg=cfg,
         worker=worker,
@@ -112,13 +118,12 @@ def build_simulations(
             simulation_time_controller: AbstractSimulationTimeController = instantiate(
                 cfg.simulation_time_controller, scenario=scenario
             )
-            if "observation" in scenario._modification:
-                if scenario._modification["observation"] == "c":
-                    cfg.observation["IDM_agents_behavior"] = "cautious"
-                elif scenario._modification["observation"] == "m":
-                    cfg.observation["IDM_agents_behavior"] = "mixed"
-                elif scenario._modification["observation"] == "e":
-                    cfg.observation["IDM_agents_behavior"] = "egoistic"
+            if "observation" in scenario.modification:
+                if scenario.modification["observation"] in cfg.scenario_filter.valid_tokens[scenario.token].observation:
+                    cfg.observation["IDM_agents_behavior"] = \
+                        observation_modification_character_to_command[scenario.modification["observation"]]
+                else:
+                    raise ValueError( f"The option \"{scenario.modification['observation']}\" is not a valid opcion for Observation" )
 
             # Perception
             observations: AbstractObservation = build_observations(

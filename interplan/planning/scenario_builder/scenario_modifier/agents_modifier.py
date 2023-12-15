@@ -53,7 +53,7 @@ from interplan.planning.utils.agent_utils import get_agent_constant_velocity_pat
 logger = logging.getLogger(__name__)
 
 
-class Behavior(Enum):
+class AgentBehavior(Enum):
     # Class to define behavior or the agents
     DEFAULT = 1
     STOPPED = 2
@@ -357,9 +357,9 @@ class AgentsModifier:
                 else:
                     location = StateSE2(*agent[0:2], 0)
                 agent_behavior = (
-                    Behavior.DEFAULT
+                    AgentBehavior.DEFAULT
                     if len(agent) > 3 and agent[3]["behavior"] == "default"
-                    else Behavior.CAUTIOUS
+                    else AgentBehavior.CAUTIOUS
                 )
                 self.add_agent_in_location(location, agent[2], behavior=agent_behavior)
 
@@ -419,7 +419,7 @@ class AgentsModifier:
         self,
         location: StateSE2,
         speed: float = None,
-        behavior: Behavior = Behavior.DEFAULT,
+        behavior: AgentBehavior = AgentBehavior.DEFAULT,
         type: Type_of_Vehicle = Type_of_Vehicle.DEFAULT,
     ) -> None:
         # Prefer to spawn agents who where previously deleted
@@ -469,7 +469,7 @@ class AgentsModifier:
         )
 
         if intersecting_agents.size > 0:
-            if behavior != Behavior.STOPPED:
+            if behavior != AgentBehavior.STOPPED:
                 return
             else:
                 # If we are spawning a stopped vehicle over a already spawn vehicle, the other vehicle gets deleted
@@ -484,28 +484,6 @@ class AgentsModifier:
 
         self.tracked_objects.tracked_objects.append(agent)
 
-    def spawn_agents_for_specific_scenarios(self, scenario):
-        if scenario == "double_side_crash":
-            searching_for_back = True  # We first search for a location behind the ego vehicle since baselinepath starts from behind
-            for pose in self.ego_lane.baseline_path.discrete_path:
-                if pose.distance_to(self.ego_state.center) > 20:
-                    if searching_for_back:
-                        back: StateSE2 = pose
-                    else:
-                        front: StateSE2 = pose
-                        break
-                else:
-                    searching_for_back = False
-
-            if "back" in locals():
-                self.add_agent_in_location(back, "fast")
-            else:
-                print("Could not Spawn agent at the back of ego vehicle")
-            if "front" in locals():
-                self.add_agent_in_location(front, "slow")
-            else:
-                print("Could not Spawn agent at the front of ego vehicle")
-
     def spawn_agents_for_special_scenarios(self):
         if (
             "stopped_vehicle"
@@ -515,14 +493,14 @@ class AgentsModifier:
                 "stopped_vehicle"
             ]:
                 location_to_spawn = StateSE2(*vehicle)
-                self.add_agent_in_location(location_to_spawn, 0, Behavior.STOPPED)
+                self.add_agent_in_location(location_to_spawn, 0, AgentBehavior.STOPPED)
         if "stopped_bus" in self.mod_details["special_scenario"][self.special_scenario]:
             for vehicle in self.mod_details["special_scenario"][self.special_scenario][
                 "stopped_bus"
             ]:
                 location_to_spawn = StateSE2(*vehicle)
                 self.add_agent_in_location(
-                    location_to_spawn, 0, Behavior.STOPPED, type=Type_of_Vehicle.BUS
+                    location_to_spawn, 0, AgentBehavior.STOPPED, type=Type_of_Vehicle.BUS
                 )
         if (
             "pedestrian" in self.mod_details["special_scenario"][self.special_scenario]
@@ -589,11 +567,6 @@ class AgentsModifier:
             elif "density" in self.modification.keys():
                 self.delete_percentage_of_agents(0)
                 self.spawn_agents(density=self.modification["density"])
-            # Spawn agents in a specific way
-            elif "specific_scenario" in self.modification.keys():
-                self.spawn_agents_for_specific_scenarios(
-                    self.modification["specific_scenario"]
-                )
             # TODO no input
             if "special_scenario" in self.modification.keys():
                 self.spawn_agents_for_special_scenarios()
@@ -697,7 +670,7 @@ class ModifiedAgent(Agent):
         angular_velocity: float | None = None,
         predictions: List[PredictedTrajectory] | None = None,
         past_trajectory: PredictedTrajectory | None = None,
-        behavior=Behavior.DEFAULT,
+        behavior=AgentBehavior.DEFAULT,
     ):
         metadata = ModifiedSceneObjectMetadata.from_scene_object_metadata(
             metadata, behavior=behavior
@@ -717,7 +690,7 @@ class ModifiedAgent(Agent):
         return self.metadata.behavior
 
     @behavior.setter
-    def behavior(self, behavior: Behavior):
+    def behavior(self, behavior: AgentBehavior):
         self._metadata = ModifiedSceneObjectMetadata.from_scene_object_metadata(
             self.metadata, behavior=behavior
         )
@@ -756,7 +729,7 @@ class ModifiedSceneObjectMetadata(SceneObjectMetadata):
         track_id: Optional[int],
         track_token: Optional[str],
         category_name,
-        behavior=Behavior.DEFAULT,
+        behavior=AgentBehavior.DEFAULT,
     ):
         super().__init__(timestamp_us, token, track_id, track_token, category_name)
         self.behavior = behavior
@@ -778,7 +751,7 @@ class ModifiedSceneObjectMetadata(SceneObjectMetadata):
         track_token = track_token or SOM.track_token
         category_name = category_name or SOM.category_name
         behavior = behavior or (
-            SOM.behavior if isinstance(SOM, cls) else Behavior.DEFAULT
+            SOM.behavior if isinstance(SOM, cls) else AgentBehavior.DEFAULT
         )
 
         return cls(timestamp_us, token, track_id, track_token, category_name, behavior)

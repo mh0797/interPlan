@@ -29,18 +29,18 @@ shuffle: false                      # Whether to shuffle the scenarios
 
 only_in_benchmark_scenarios: true             # Only include tokens-modifications from the list of valid tokens
 valid_tokens: {                      # Tokens included in the benchmark and their modifications
-  18089089fbd655a5: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
-  cfad48a855765482: {goal: [l,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
-  d480a5d2b0fe5fe6: {goal: [l,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
-  feb82815b92a5512: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
-  5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: []},
-  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: []}, 
-  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
-  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [e,c,m], agent_variations: [0], special_scenario: [0]}, 
-  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
-  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]},
-  81f400b414215325: {goal: [r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0]},
-  c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [e,c,m], agent_variations: [0], special_scenario: [0, 1]}}
+  18089089fbd655a5: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
+  cfad48a855765482: {goal: [l,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]}, 
+  d480a5d2b0fe5fe6: {goal: [l,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []}, 
+  feb82815b92a5512: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
+  5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
+  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: []}, 
+  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
+  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0]}, 
+  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
+  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]},
+  81f400b414215325: {goal: [r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
+  c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]}}
 
 modifications:
   accel_max: ${oc.select:observation.accel_max, 1}
@@ -89,19 +89,6 @@ modifications:
         right: null
         straight: null
       spawn_in_intersection: true
-    4a43ee2c4df75661:
-      extra_agents_to_spawn:
-      - - 365119.23
-        - 143392.12
-        - 0
-      - - 365129.0
-        - 143387.04
-        - 0
-      goal:
-        left: null
-        right: null
-        straight: null
-      spawn_in_intersection: true
     5016a2a4ad1350d6:
       extra_agents_to_spawn: []
       goal:
@@ -146,7 +133,7 @@ modifications:
         - behavior: cautious
           snap: true
       goal:
-        left: 664423.69, 3997628.88
+        left: null
         right: null
         straight: null
       spawn_in_intersection: true

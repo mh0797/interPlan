@@ -22,7 +22,7 @@ from nuplan.planning.simulation.occupancy_map.strtree_occupancy_map import (
 from tqdm import tqdm
 
 from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import (
-    Behavior, ModifiedAgent)
+    AgentBehavior, ModifiedAgent)
 from interplan.planning.simulation.observation.idm.modified_idm_agent import (
     IDMAgent, IDMInitialState)
 
@@ -207,7 +207,7 @@ def build_idm_agents(
             route, progress = get_starting_segment(agent, map_api) 
 
             # So that stopped agents don't get ignored
-            if route is None and isinstance(agent, ModifiedAgent) and agent.behavior == Behavior.STOPPED:
+            if route is None and isinstance(agent, ModifiedAgent) and agent.behavior == AgentBehavior.STOPPED:
                 route = get_current_route_objects( map_api, ego_agent.center.point)[0]
                 progress = 0
 
@@ -216,7 +216,7 @@ def build_idm_agents(
                 continue
             
             # Snap agent to baseline path
-            if not isinstance(agent, ModifiedAgent) or agent.behavior != Behavior.STOPPED:
+            if not isinstance(agent, ModifiedAgent) or agent.behavior != AgentBehavior.STOPPED:
                 state_on_path = route.baseline_path.get_nearest_pose_from_position(agent.center.point)
                 box_on_baseline = OrientedBox.from_new_pose(
                     agent.box, StateSE2(state_on_path.x, state_on_path.y, state_on_path.heading)

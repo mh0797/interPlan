@@ -22,15 +22,24 @@ def get_agent_constant_velocity_path(agent: Agent, seconds: float = 3) -> list[P
     back_center_agent_point = StateSE2(agent.center.x + agent.box.half_length*math.cos(agent.center.heading + math.pi),
                                         agent.center.y + agent.box.half_length*math.sin(agent.center.heading + math.pi),
                                         agent.center.heading)
-    front_center_agent_point = StateSE2(agent.center.x + agent.box.half_length*math.cos(agent.center.heading),
-                                        agent.center.y + agent.box.half_length*math.sin(agent.center.heading),
-                                        agent.center.heading)
     path = [StateSE2(*back_center_agent_point), StateSE2(*agent.center)]
     rotated_velocity = rotate_angle(StateSE2(agent.velocity.x, agent.velocity.y, agent.center.heading) , -agent.center.heading)
     for i in np.arange(0, seconds + 0.1, 0.1):
+        new_agent_center = StateSE2(
+            agent.center.x + i*rotated_velocity.x,
+            agent.center.y + i*rotated_velocity.y,
+            agent.center.heading)
+        front_center_agent_point = StateSE2(
+            new_agent_center.x + agent.box.half_length*math.cos(new_agent_center.heading),
+            new_agent_center.y + agent.box.half_length*math.sin(new_agent_center.heading),
+            new_agent_center.heading)
         path.append(
-            StateSE2(front_center_agent_point.x + i*rotated_velocity.x, front_center_agent_point.y + i*rotated_velocity.y, agent.center.heading)
+            StateSE2(
+                front_center_agent_point.x,
+                front_center_agent_point.y,
+                front_center_agent_point.heading
             )
+        )
     path: ProgressStateSE2 = convert_se2_path_to_progress_path(path)    
     return path
 
