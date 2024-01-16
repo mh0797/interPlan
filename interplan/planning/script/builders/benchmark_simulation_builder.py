@@ -10,7 +10,7 @@ from nuplan.common.utils.distributed_scenario_filter import (
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_builder import (
     NuPlanScenarioBuilder,
 )
-from nuplan.planning.script.builders.metric_builder import build_metrics_engines
+from interplan.planning.script.builders.benchmark_metric_builder import build_metrics_engines
 from nuplan.planning.script.builders.observation_builder import build_observations
 from nuplan.planning.script.builders.planner_builder import build_planners
 from nuplan.planning.script.builders.utils.utils_type import is_target_type
