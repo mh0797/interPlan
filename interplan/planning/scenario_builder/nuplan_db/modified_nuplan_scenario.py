@@ -303,7 +303,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
 
     def get_mission_goal(self) -> Optional[StateSE2]:
         if "goal" not in self.modification.keys():
-            return super().get_mission_goal()
+            return super().get_expert_goal_state()
         elif self.goal_location:
             return self.expert_route_lane_sequence[
                 -1
@@ -506,20 +506,60 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         for sample_number in range(num_samples+1):
             tracked_objects_list = []
             for agent, lane, progress in vehicles:
-                # Update progress
-                progress -= agent.velocity.x * self.database_interval * (23 - sample_number) + gauss(0, 0.1)
-                # In case progress < 0: get previous lane
-                if progress < 0:
-                    candidate_lane = next(iter(lane.incoming_edges), None)
-                    if candidate_lane == None: 
-                        progress = 0
-                    else: 
-                        lane = candidate_lane
-                        progress = lane.baseline_path.length + progress
-                # Get pose from progress
-                position = lane.baseline_path.linestring.interpolate(progress)
-                pose = lane.baseline_path.get_nearest_pose_from_position(position)
+                if lane:
+                    # Update progress
+                    progress -= agent.velocity.x * self.database_interval * (23 - sample_number) + gauss(0, 0.1)
+                    # In case progress < 0: get previous lane
+                    if progress < 0:
+                        candidate_lane = next(iter(lane.incoming_edges), None)
+                        if candidate_lane == None: 
+                            progress = 0
+                        else: 
+                            lane = candidate_lane
+                            progress = lane.baseline_path.length + progress
+                    # Get pose from progress
+                    position = lane.baseline_path.linestring.interpolate(progress)
+                    pose = lane.baseline_path.get_nearest_pose_from_position(position)
+                else:
+                    pose = agent.center
                 # Create new agent from pose and add to list
                 new_agent = Agent.from_new_pose(agent, pose)
                 tracked_objects_list.append(new_agent)
             yield DetectionsTracks(TrackedObjects(tracked_objects_list))
+
+def get_starting_segment(
+    agent: Agent, map_api: AbstractMap
+) -> Tuple[Optional[LaneGraphEdgeMapObject], Optional[float]]:
+    """
+    Taken from: nuplan-devkit/nuplan/planning/simulation/observation/idm/idm_agents_builder.py 
+    and modified
+    Gets the map object that the agent is on and the progress along the segment.
+    :param agent: The agent of interested.
+    :param map_api: An AbstractMap instance.
+    :return: GraphEdgeMapObject and progress along the segment. If no map object is found then None.
+    """
+    if map_api.is_in_layer(agent.center, SemanticMapLayer.LANE):
+        layer = SemanticMapLayer.LANE
+    elif map_api.is_in_layer(agent.center, SemanticMapLayer.INTERSECTION):
+        layer = SemanticMapLayer.LANE_CONNECTOR
+    else:
+        return None, None
+
+    segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(agent.center, layer)
+    if not segments:
+        # If there is no lane in the center of the agents then try the corners
+        for corner in agent.box.all_corners():
+            segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(corner, layer)
+            if segments: break
+        else:
+            return None, None
+
+    # Get segment with the closest heading to the agent
+    heading_diff = [
+        segment.baseline_path.get_nearest_pose_from_position(agent.center).heading - agent.center.heading
+        for segment in segments
+    ]
+    closest_segment = segments[np.argmin(np.abs(heading_diff))]
+
+    progress = closest_segment.baseline_path.get_nearest_arc_length_from_position(agent.center)
+    return closest_segment, progress

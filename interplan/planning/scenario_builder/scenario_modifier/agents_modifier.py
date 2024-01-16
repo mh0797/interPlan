@@ -544,7 +544,7 @@ class AgentsModifier:
                             token=f"{random.randrange(16**16):=16x}",
                             track_id=random.randint(100, 1000),
                             track_token=f"{random.randrange(16**16):=16x}",
-                            category_name="pedestrian",
+                            category_name="traffic_cone",
                         ),
                     ]
                 )
@@ -569,6 +569,8 @@ class AgentsModifier:
                 self.spawn_agents(density=self.modification["density"])
             # TODO no input
             if "special_scenario" in self.modification.keys():
+                if not "density" in self.modification.keys():
+                    self.delete_percentage_of_agents(0)
                 self.spawn_agents_for_special_scenarios()
 
             self.initial_tracked_objects = self.tracked_objects
@@ -587,7 +589,7 @@ class AgentsModifier:
         tracked_objects = self.get_tracked_objects_at_iteration(0)
         return tracked_objects, self.modified_ego_speed
 
-    def get_pedestrians_at_iteration(self, iteration, ego_state: EgoState):
+    def get_pedestrians_at_iteration(self, iteration, ego_state: EgoState) -> List[Agent]:
         """
         Get pedestrians depending on the iteration and ego state
         """
@@ -653,7 +655,7 @@ class AgentsModifier:
         for location, metadata in self.cones:
             self.tracked_objects.tracked_objects.append(
                 StaticObject(
-                    TrackedObjectType.GENERIC_OBJECT,
+                    TrackedObjectType.TRAFFIC_CONE,
                     OrientedBox(location, 0.5, 0.5, 0.5),
                     metadata,
                 )

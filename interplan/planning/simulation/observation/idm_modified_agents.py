@@ -193,8 +193,11 @@ class IDMAgents(AbstractObservation):
         ol_detections = detections.tracked_objects.get_tracked_objects_of_types(self._open_loop_detections_types)  # type: ignore
          
          # Add pedestrians to detections
-        pedestrians = self._scenario.agents_modifier.get_pedestrians_at_iteration(
-            self.current_iteration, self.ego_state)
+        if self._scenario.agents_modifier:
+            pedestrians = self._scenario.agents_modifier.get_pedestrians_at_iteration(
+                self.current_iteration, self.ego_state)
+        else:
+            pedestrians = detections.tracked_objects.get_tracked_objects_of_type(TrackedObjectType.PEDESTRIAN)
         if pedestrians: ol_detections.extend(pedestrians)
 
         return ol_detections
