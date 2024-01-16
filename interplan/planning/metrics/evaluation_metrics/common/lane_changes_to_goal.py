@@ -70,8 +70,8 @@ class LaneChangesToGoalStatistics(MetricBase):
         return max(
             0.0,
             (1.0
-            - self.number_of_lane_changes_to_goal)
-            / self.initial_number_of_lane_changes_to_goal,
+            - self.number_of_lane_changes_to_goal
+            / self.initial_number_of_lane_changes_to_goal),
         )
 
     def compute(
@@ -148,15 +148,19 @@ class LaneChangesToGoalStatistics(MetricBase):
             last_expert_lane = expert_simplified_route[-1]
             last_ego_lane_on_route = ego_simplified_route[-1]
 
+        # We define an offset that is 1 in case expert did lane change in first time step
+        if expert_route[0][0].get_roadblock_id() == expert_route[1][0].get_roadblock_id():
+            offset = 1
+        else:
+            offset = 0
+
         self.initial_number_of_lane_changes_to_goal = (
             (
                 self.get_number_of_lane_changes_to_goal(
-                    ego_simplified_route[0], expert_simplified_route[1]
+                    ego_route[0][0], expert_route[0 + offset][0]
                 )
             )
-            if len(expert_simplified_route) > 1 and
-            ego_simplified_route[0].get_roadblock_id()
-            == expert_simplified_route[1].get_roadblock_id()
+            if len(expert_simplified_route) > 1
             else 0
         )
 
@@ -211,7 +215,6 @@ class LaneChangesToGoalStatistics(MetricBase):
         ]
         while queue:
             lane, lane_changes = queue.pop(0)
-            print(lane.id)
             if lane.id not in lane_changes_for_lanes_in_roadbloack.keys():
                 lane_changes_for_lanes_in_roadbloack.update({lane.id: lane_changes})
             # get adjacent lanes, append if not in visited and not in queue
