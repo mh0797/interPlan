@@ -184,16 +184,12 @@ class IDMMobilPlanner(AbstractIDMPlanner):
 
         previous_ego_state = current_input.history.ego_states[-2]
         previous_observations = current_input.history.observations[-2]
-        current_states = observations.tracked_objects.get_tracked_objects_of_types(
-            [TrackedObjectType.VEHICLE, TrackedObjectType.PEDESTRIAN]
-        )
-        previous_states = (
-            previous_observations.tracked_objects.get_tracked_objects_of_types(
-                [TrackedObjectType.VEHICLE, TrackedObjectType.PEDESTRIAN]
-            )
-        )
+        current_states = observations.tracked_objects.tracked_objects
+        previous_states = previous_observations.tracked_objects.tracked_objects
 
         for idx, current_state in enumerate(current_states):
+            if current_state.tracked_object_type not in [TrackedObjectType.VEHICLE, TrackedObjectType.PEDESTRIAN]:
+                continue
             previous_state: Agent = next(
                 iter(
                     [
