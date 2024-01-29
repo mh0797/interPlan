@@ -20,4 +20,13 @@ defaults:
       - driving_direction_compliance_statistics
   - approaching_construction_zone:
       - ego_sorts_construction_zone_statistics
+  - avoid_crashed_cars:
+      - ego_sorts_stopped_vehicle_statistics
+  - nudge_around_parked_vehicle:
+      - ego_sorts_stopped_vehicle_statistics
+  - overtake_parked_vehicle:
+      - ego_sorts_stopped_vehicle_statistics
+  - jaywalking_pedestrian:
+      - ego_sorts_pedestrian_statistics
+
       
