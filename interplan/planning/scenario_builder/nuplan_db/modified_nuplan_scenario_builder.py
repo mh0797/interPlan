@@ -17,7 +17,6 @@ from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_filter_utils imp
     scenario_dict_to_list,
 )
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
-    DEFAULT_SCENARIO_NAME,
     ScenarioMapping,
     absolute_path_to_log_name,
     download_file_if_necessary,
@@ -30,7 +29,7 @@ from interplan.planning.scenario_builder.nuplan_db.modified_nuplan_scenario impo
     ModifiedNuPlanScenario,
 )
 from interplan.planning.scenario_builder.scenario_utils import (
-    ModificationsSerializableDictionary,
+    ModificationsSerializableDictionary as ModDict,
 )
 
 logger = logging.getLogger(__name__)
@@ -139,7 +138,7 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                 delete_bool = False
 
                 # Create a dictionary with the modifications of a single scenario
-                modifications_dict = ModificationsSerializableDictionary({})
+                modifications_dict = ModDict({})
                 for modification_category in scenario_filter.modifications.keys():
                     if modification_category != "scenario_specifics":
                         modifications_dict.dictionary[
@@ -256,30 +255,40 @@ def get_scenarios_from_db_file(params: GetScenariosFromDbFileParams) -> Scenario
         not params.remove_invalid_goals,
         params.include_cameras,
     ):
-        scenario_type = row["scenario_type"]
-
-        if scenario_type is None:
-            scenario_type = DEFAULT_SCENARIO_NAME
-
-        if scenario_type not in scenario_dict:
-            scenario_dict[scenario_type] = []
-
-        extraction_info = (
-            None
-            if params.expand_scenarios
-            else params.scenario_mapping.get_extraction_info(scenario_type)
-        )
-
-        if extraction_info: 
-            extraction_info = ScenarioExtractionInfo(
-                scenario_name=extraction_info.scenario_name,
-                scenario_duration=30.0, # All modified scenarios will be 30 seconds long
-                extraction_offset=extraction_info.extraction_offset,
-                subsample_ratio=extraction_info.subsample_ratio,
-                )
-            
         modifications = params.modifications[f"{row['token'].hex()}"]
         for modification in modifications:
+            # Get Scenario Type
+            special_scenario_number = modification.dictionary.get("special_scenario")
+            traffic_density = modification.dictionary.get("density")
+            if special_scenario_number:
+                scenario_type = modification.dictionary[
+                    "modification_details_dictionary"
+                ][row["token"].hex()]["special_scenario"][special_scenario_number][
+                    "type"
+                ]
+            elif traffic_density:
+                scenario_type = f"{ModDict.density_modification_character_to_command[traffic_density]}_traffic_density"
+            else:
+                scenario_type = "standard_modified_nuplan_scenario"
+
+            if scenario_type not in scenario_dict:
+                scenario_dict[scenario_type] = []
+
+            # Get Extraction Info
+            extraction_info = (
+                None
+                if params.expand_scenarios
+                else params.scenario_mapping.get_extraction_info(scenario_type)
+            )
+
+            if extraction_info:
+                extraction_info = ScenarioExtractionInfo(
+                    scenario_name=extraction_info.scenario_name,
+                    scenario_duration=30.0,  # All modified scenarios will be 30 seconds long
+                    extraction_offset=extraction_info.extraction_offset,
+                    subsample_ratio=extraction_info.subsample_ratio,
+                )
+
             scenario_dict[scenario_type].append(
                 ModifiedNuPlanScenario(
                     data_root=params.data_root,

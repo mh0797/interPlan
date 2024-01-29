@@ -10,6 +10,12 @@ class ModificationsSerializableDictionary:
         "s": "special_scenario",
     }
 
+    density_modification_character_to_command = {
+            "l": "low",
+            "m": "medium",
+            "h": "high",
+        }
+
     def __init__(self, dictionary) -> None:
         self.dictionary = dictionary
 

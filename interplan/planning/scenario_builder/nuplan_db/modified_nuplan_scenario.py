@@ -18,34 +18,41 @@ from nuplan.common.actor_state.agent import Agent
 from nuplan.common.geometry.compute import principal_value
 from nuplan.common.maps.abstract_map import AbstractMap
 from nuplan.common.maps.abstract_map_objects import (
-    LaneGraphEdgeMapObject, RoadBlockGraphEdgeMapObject)
+    LaneGraphEdgeMapObject,
+    RoadBlockGraphEdgeMapObject,
+)
 from nuplan.common.maps.maps_datatypes import SemanticMapLayer
 from nuplan.common.maps.nuplan_map.lane import NuPlanLane
-from nuplan.common.maps.nuplan_map.polyline_map_object import \
-    NuPlanPolylineMapObject
-from nuplan.database.nuplan_db.nuplan_scenario_queries import \
-    get_ego_state_for_lidarpc_token_from_db
+from nuplan.common.maps.nuplan_map.polyline_map_object import NuPlanPolylineMapObject
+from nuplan.database.nuplan_db.nuplan_scenario_queries import (
+    get_ego_state_for_lidarpc_token_from_db,
+)
 from nuplan.planning.metrics.utils.route_extractor import (
-    get_current_route_objects, get_route, get_route_simplified)
+    get_current_route_objects,
+    get_route,
+    get_route_simplified,
+)
 from nuplan.planning.metrics.utils.state_extractors import extract_ego_center
-from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario import \
-    NuPlanScenario
+from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario import NuPlanScenario
 from nuplan.planning.scenario_builder.nuplan_db.nuplan_scenario_utils import (
-    ScenarioExtractionInfo, extract_tracked_objects)
-from nuplan.planning.simulation.observation.idm.idm_agents_builder import \
-    get_starting_segment
-from nuplan.planning.simulation.observation.observation_type import \
-    DetectionsTracks
-from nuplan.planning.simulation.trajectory.trajectory_sampling import \
-    TrajectorySampling
+    ScenarioExtractionInfo,
+    extract_tracked_objects,
+)
+from nuplan.planning.simulation.observation.idm.idm_agents_builder import (
+    get_starting_segment,
+)
+from nuplan.planning.simulation.observation.observation_type import DetectionsTracks
+from nuplan.planning.simulation.trajectory.trajectory_sampling import TrajectorySampling
 
-from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import \
-    AgentsModifier
-from interplan.planning.scenario_builder.scenario_utils import \
-    ModificationsSerializableDictionary
-from interplan.planning.simulation.planner.utils.breadth_first_search_lane_goal import \
-    BreadthFirstSearch
-
+from interplan.planning.scenario_builder.scenario_modifier.agents_modifier import (
+    AgentsModifier,
+)
+from interplan.planning.scenario_builder.scenario_utils import (
+    ModificationsSerializableDictionary as ModDict,
+)
+from interplan.planning.simulation.planner.utils.breadth_first_search_lane_goal import (
+    BreadthFirstSearch,
+)
 
 
 class ModifiedNuPlanScenario(NuPlanScenario):
@@ -62,7 +69,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         scenario_extraction_info: Optional[ScenarioExtractionInfo],
         ego_vehicle_parameters: VehicleParameters,
         sensor_root: Optional[str] = None,
-        modification: Optional[ModificationsSerializableDictionary] = None,
+        modification: Optional[ModDict] = None,
     ):
         super().__init__(
             data_root=data_root,
@@ -79,7 +86,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         )
 
         if isinstance(modification, dict):
-            modification = ModificationsSerializableDictionary(modification)
+            modification = ModDict(modification)
 
         # Set modification details dictionary for this specific token, this may include information like
         # the coordinates of the multiple goals that can be selected for the scenario or the special config for
@@ -95,11 +102,6 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             "l": "left",
             "r": "right",
             "s": "straight",
-        }
-        self._density_modification_character_to_command = {
-            "l": "low",
-            "m": "medium",
-            "h": "high",
         }
 
         # If it is special scenario modify the variable modification, since special scenarios may include their own config parameters
@@ -369,12 +371,16 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             path_found
         ), f"Could not find a path for the command {command} provided for scenario {self.token}"
 
-        # Make route plan as long as an expert going at the speed limit would go 
+        # Make route plan as long as an expert going at the speed limit would go
         time = 0
         for index, lane in enumerate(route_plan):
             time += lane.baseline_path.length / (lane.speed_limit_mps or 15)
             if time > self.duration_s.time_s:
-                route_plan = route_plan[:index+1] if index + 1 < len(route_plan) else route_plan
+                route_plan = (
+                    route_plan[: index + 1]
+                    if index + 1 < len(route_plan)
+                    else route_plan
+                )
                 break
 
         return [r.id for r in route_roadblocks], route_plan
@@ -470,7 +476,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         return (
             self.token
             + "-"
-            + ModificationsSerializableDictionary(self.modification).to_string()
+            + ModDict(self.modification).to_string()
         )
 
     @property
@@ -487,10 +493,10 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         if special_scenario_type:
             return special_scenario_type
         elif traffic_density:
-            return f"{self._density_modification_character_to_command[traffic_density]}_traffic_density"
+            return f"{ModDict.density_modification_character_to_command[traffic_density]}_traffic_density"
         else:
             return "standard_modified_nuplan_scenario"
-        
+
     def get_past_tracked_objects(
         self,
         iteration: int,
@@ -499,22 +505,29 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         future_trajectory_sampling: Optional[TrajectorySampling] = None,
     ) -> Generator[DetectionsTracks, None, None]:
         """Inherited, see superclass."""
-        
+
         initial_detections = self.get_tracked_objects_at_iteration(0)
-        vehicles = initial_detections.tracked_objects.get_tracked_objects_of_type(TrackedObjectType.VEHICLE)
-        vehicles = [(vehicle, *get_starting_segment(vehicle, self.map_api)) for vehicle in vehicles]
-        for sample_number in range(num_samples+1):
+        vehicles = initial_detections.tracked_objects.get_tracked_objects_of_type(
+            TrackedObjectType.VEHICLE
+        )
+        vehicles = [
+            (vehicle, *get_starting_segment(vehicle, self.map_api))
+            for vehicle in vehicles
+        ]
+        for sample_number in range(num_samples + 1):
             tracked_objects_list = []
             for agent, lane, progress in vehicles:
                 if lane:
                     # Update progress
-                    progress -= agent.velocity.x * self.database_interval * (23 - sample_number) + gauss(0, 0.1)
+                    progress -= agent.velocity.x * self.database_interval * (
+                        23 - sample_number
+                    ) + gauss(0, 0.1)
                     # In case progress < 0: get previous lane
                     if progress < 0:
                         candidate_lane = next(iter(lane.incoming_edges), None)
-                        if candidate_lane == None: 
+                        if candidate_lane == None:
                             progress = 0
-                        else: 
+                        else:
                             lane = candidate_lane
                             progress = lane.baseline_path.length + progress
                     # Get pose from progress
@@ -527,11 +540,12 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 tracked_objects_list.append(new_agent)
             yield DetectionsTracks(TrackedObjects(tracked_objects_list))
 
+
 def get_starting_segment(
     agent: Agent, map_api: AbstractMap
 ) -> Tuple[Optional[LaneGraphEdgeMapObject], Optional[float]]:
     """
-    Taken from: nuplan-devkit/nuplan/planning/simulation/observation/idm/idm_agents_builder.py 
+    Taken from: nuplan-devkit/nuplan/planning/simulation/observation/idm/idm_agents_builder.py
     and modified
     Gets the map object that the agent is on and the progress along the segment.
     :param agent: The agent of interested.
@@ -545,21 +559,29 @@ def get_starting_segment(
     else:
         return None, None
 
-    segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(agent.center, layer)
+    segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(
+        agent.center, layer
+    )
     if not segments:
         # If there is no lane in the center of the agents then try the corners
         for corner in agent.box.all_corners():
-            segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(corner, layer)
-            if segments: break
+            segments: List[LaneGraphEdgeMapObject] = map_api.get_all_map_objects(
+                corner, layer
+            )
+            if segments:
+                break
         else:
             return None, None
 
     # Get segment with the closest heading to the agent
     heading_diff = [
-        segment.baseline_path.get_nearest_pose_from_position(agent.center).heading - agent.center.heading
+        segment.baseline_path.get_nearest_pose_from_position(agent.center).heading
+        - agent.center.heading
         for segment in segments
     ]
     closest_segment = segments[np.argmin(np.abs(heading_diff))]
 
-    progress = closest_segment.baseline_path.get_nearest_arc_length_from_position(agent.center)
+    progress = closest_segment.baseline_path.get_nearest_arc_length_from_position(
+        agent.center
+    )
     return closest_segment, progress
