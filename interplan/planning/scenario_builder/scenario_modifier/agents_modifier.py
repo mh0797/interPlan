@@ -12,7 +12,7 @@ from nuplan.common.actor_state.agent_state import AgentState
 from nuplan.common.actor_state.ego_state import EgoState
 from nuplan.common.actor_state.oriented_box import OrientedBox
 from nuplan.common.actor_state.scene_object import SceneObjectMetadata
-from nuplan.common.actor_state.state_representation import StateSE2, StateVector2D
+from nuplan.common.actor_state.state_representation import StateSE2, StateVector2D, Point2D
 from nuplan.common.actor_state.static_object import StaticObject
 from nuplan.common.actor_state.tracked_objects import (
     TrackedObject,
@@ -24,6 +24,7 @@ from nuplan.common.maps.abstract_map_objects import LaneGraphEdgeMapObject
 from nuplan.common.maps.maps_datatypes import SemanticMapLayer
 from nuplan.common.maps.nuplan_map.lane import NuPlanLane
 from nuplan.common.maps.nuplan_map.polyline_map_object import NuPlanPolylineMapObject
+from nuplan.common.geometry.compute import principal_value
 from nuplan.database.nuplan_db.nuplan_scenario_queries import (
     get_ego_state_for_lidarpc_token_from_db,
 )
@@ -472,13 +473,19 @@ class AgentsModifier:
             if behavior != AgentBehavior.STOPPED:
                 return
             else:
-                # If we are spawning a stopped vehicle over a already spawn vehicle, the other vehicle gets deleted
-                for agent_id in intersecting_agents.get_all_ids():
+                # If we are spawning a stopped vehicle over a already (not stopped) spawned vehicle,
+                # the other vehicle gets deleted
+                for intersecting_agent_id in intersecting_agents.get_all_ids():
                     self.tracked_objects = TrackedObjects(
                         [
-                            obj
-                            for obj in self.tracked_objects.tracked_objects
-                            if obj.track_token != agent_id
+                            tracked_obj
+                            for tracked_obj in self.tracked_objects.tracked_objects
+                            if (tracked_obj.track_token != intersecting_agent_id or
+                                (tracked_obj.track_token == intersecting_agent_id and
+                                isinstance(tracked_obj, ModifiedAgent) and
+                                tracked_obj.behavior == AgentBehavior.STOPPED 
+                                )
+                            )
                         ]
                     )
 
@@ -509,13 +516,18 @@ class AgentsModifier:
             for pedestrian in self.mod_details["special_scenario"][
                 self.special_scenario
             ]["pedestrian"]:
+                start_point = Point2D(*pedestrian[0:2])
+                end_point = Point2D(*pedestrian[2:-1])
+                heading = principal_value(math.atan2(
+                end_point.y - start_point.y, end_point.x - start_point.x,
+                ))
                 self.pedestrians_list.append(  # [Path, Metadata, Iteration to become active]
                     [
                         InterpolatedPath(
                             convert_se2_path_to_progress_path(
                                 [
-                                    StateSE2(*pedestrian[0:2], 0),
-                                    StateSE2(*pedestrian[2:-1], 0),
+                                    StateSE2(*start_point, heading),
+                                    StateSE2(*end_point, heading),
                                 ]
                             )
                         ),

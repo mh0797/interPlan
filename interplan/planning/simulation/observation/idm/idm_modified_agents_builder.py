@@ -224,7 +224,15 @@ def build_idm_agents(
             else: box_on_baseline = agent.box # don't snap if agent is stopped
 
             # Check for collision
-            if not init_agent_occupancy.intersects(box_on_baseline.geometry).is_empty():
+            stopped_vehicles_tokens = [agent.track_token for agent in detections.tracked_objects.get_agents() if (
+                isinstance(agent, ModifiedAgent) and agent.behavior == AgentBehavior.STOPPED)]
+            collided_vehicles_tokens = init_agent_occupancy.intersects(box_on_baseline.geometry)
+            # Check if there are no collisions with this agent and
+            # if there are collisions they should not be between stopped vehicles
+            if not isinstance(agent, ModifiedAgent) or (
+                agent.behavior != AgentBehavior.STOPPED and 
+                not set(collided_vehicles_tokens._geom_map).issubset(stopped_vehicles_tokens)
+                ): 
                 continue
 
             # Add to init_agent_occupancy for collision checking
