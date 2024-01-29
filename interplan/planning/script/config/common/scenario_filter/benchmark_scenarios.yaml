@@ -30,17 +30,22 @@ shuffle: false                      # Whether to shuffle the scenarios
 only_in_benchmark_scenarios: true             # Only include tokens-modifications from the list of valid tokens
 valid_tokens: {                      # Tokens included in the benchmark and their modifications
   18089089fbd655a5: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
-  cfad48a855765482: {goal: [l,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]}, 
+  cfad48a855765482: {goal: [l,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2]}, 
   d480a5d2b0fe5fe6: {goal: [l,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []}, 
   feb82815b92a5512: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
   5eb9b51ebe1758df: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: []},
-  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: []}, 
-  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
-  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0]}, 
-  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
-  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]},
-  81f400b414215325: {goal: [r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0]},
-  c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]}}
+  cd0e827efbe85a8f: {goal: [r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2]}, 
+  71f182558ee95100: {goal: [l,r,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2, 3, 
+                      4, 5, 6, 7, 8, 9]},
+  948201ecfe2c560a: {goal: [l,s], density: [l,m], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2]}, 
+  5016a2a4ad1350d6: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2, 3]},
+  2d62c3139aa95007: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1,
+                      2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]},
+  81f400b414215325: {goal: [r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]},
+  c710330e5114501c: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1, 2, 3, 4]},
+  f8684ea2cf1c512b: {goal: [l,r,s], density: [l,m,h], observation: [a,c,m], agent_variations: [0], special_scenario: [0, 1]},
+  168c4e592f1b5984: {goal: [], density: [], observation: [], agent_variations: [0], special_scenario: [0, 1, 2]}
+}
 
 modifications:
   accel_max: ${oc.select:observation.accel_max, 1}
@@ -79,6 +84,125 @@ modifications:
           - - 365393.1
             - 143807.98
             - 1.29
+        '2':
+          type: avoid_crashed_cars
+          roadblock_locations_to_spawn_agents: []
+          stopped_vehicle:
+          - - 365401.49
+            - 143836.74
+            - 1.204277
+          - - 365401.39
+            - 143840.84
+            - -0.57596
+        '3':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365390.44
+            - 143806.36
+            - 1.274
+        '4':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365396.40
+            - 143825.40
+            - 1.274
+        '5':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365403.84
+            - 143848.84
+            - 1.274
+        '6':
+          type: approaching_construction_zone
+          config: gl
+          cones:
+          - - 365404.16
+            - 143849.11
+          - - 365405.47
+            - 143850.09
+          - - 365406.53
+            - 143851.58
+          - - 365406.00
+            - 143853.40
+          pedestrian:
+          - - 365405.13
+            - 143852.4
+            - 365404.13
+            - 143852.4
+            - null
+        '7':
+          type: approaching_construction_zone
+          config: gl
+          cones:
+          - - 365405.29
+            - 143863.1
+          - - 365406.95
+            - 143862.32
+          - - 365408.49
+            - 143861.54
+          - - 365407.72
+            - 143859.71
+          - - 365406.47
+            - 143858.28
+          pedestrian:
+          - - 365407.78
+            - 143861.16
+            - 365406.78
+            - 143861.16
+            - null
+        '8':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365405.08
+            - 143822.12
+            - 365380.49
+            - 143820.06
+            - null
+        '9':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365413.54
+            - 143848.52
+            - 365384.74
+            - 143847.14
+            - null
+        '10':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365402.67
+            - 143846.87
+            - 365410.60
+            - 143845.62
+            - null
+        '11':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365397.95
+            - 143831.60
+            - 365407.77
+            - 143835.88
+            - null
+        '12':
+          type: overtake_parked_vehicle
+          config: dh
+          stopped_vehicle:
+          - - 365392.1
+            - 143807.78
+            - 1.29
+        '13':
+          type: overtake_parked_vehicle
+          config: a0
+          stopped_vehicle:
+          - - 365404.52
+            - 143848.79
+            - 1.29
+        '14':
+          type: overtake_parked_vehicle
+          config: a0
+          stopped_vehicle:
+          - - 365405.61
+            - 143848.79
+            - 1.29
     2d754c5d1e325ba4:
       extra_agents_to_spawn:
       - - 664578.55
@@ -102,28 +226,98 @@ modifications:
           cones:
           - - 664434.93
             - 3998307.44
-            - 0
           - - 664434.93
             - 3998297.44
-            - 0
           - - 664439.93
             - 3998302.44
-            - 0
           - - 664430.93
             - 3998302.44
-            - 0
           - - 664437.93
             - 3998305.44
-            - 0
           - - 664437.93
             - 3998299.44
-            - 0
           - - 664431.93
             - 3998305.44
-            - 0
           - - 664431.93
             - 3998299.44
-            - 0
+          pedestrian:
+          - - 664434.9
+            - 3998302.58
+            - 664435.9
+            - 3998302.58
+            - null
+          config: dl
+        '1':
+          type: approaching_construction_zone
+          cones:
+          - - 664428.20
+            - 3998307.44
+          - - 664428.20
+            - 3998297.44
+          - - 664433.20
+            - 3998302.44
+          - - 664424.20
+            - 3998302.44
+          - - 664431.20
+            - 3998305.44
+          - - 664431.20
+            - 3998299.44
+          - - 664425.02
+            - 3998305.44
+          - - 664425.02
+            - 3998299.44
+          pedestrian:
+          - - 664427.69
+            - 3998302.24
+            - 664428.69
+            - 3998302.24
+            - null
+          config: dl
+        '2':
+          type: approaching_construction_zone
+          cones:
+          - - 664426.51
+            - 3998309.59
+          - - 664428.76
+            - 3998306.71
+          - - 664430.27
+            - 3998304.74
+          - - 664430.47
+            - 3998301.78
+          - - 664430.52
+            - 3998298.91
+          - - 664428.01
+            - 3998298.82
+          pedestrian:
+          - - 664428.22
+            - 3998300.05
+            - 664428.22
+            - 3998301.05
+            - null
+          config: dl
+        '3':
+          type: approaching_construction_zone
+          cones:
+          - - 664426.51
+            - 3998309.59
+          - - 664428.76
+            - 3998306.71
+          - - 664430.27
+            - 3998304.74
+          - - 664433.47
+            - 3998302.6
+          - - 664436.16
+            - 3998299.81
+          - - 664431.82
+            - 3998299.15
+          - - 664428.01
+            - 3998299.81
+          pedestrian:
+          - - 664431.64
+            - 3998301.29
+            - 664430.64
+            - 3998301.29
+            - null
           config: dl
     5eb9b51ebe1758df:
       extra_agents_to_spawn:
@@ -146,7 +340,7 @@ modifications:
       spawn_in_intersection: true
       special_scenario:
         '0':
-          type: passing_stopped_bus
+          type: jaywalking_pedestrian
           pedestrian:
           - - 365420.6
             - 143949.66
@@ -167,6 +361,126 @@ modifications:
           - - 365421.39
             - 143944.2
             - 1.74533
+        '1':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365418.30
+            - 143895.61
+            - 1.22173
+        '2':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365421.0
+            - 143905.34
+            - 1.309
+        '3':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365415.95
+            - 143965.45
+            - 1.95477
+        '4':
+          type: approaching_construction_zone
+          cones:
+          - - 365420.33
+            - 143956.47
+          - - 365421.02
+            - 143954.5
+          - - 365421.31
+            - 143952.8
+          - - 365421.82
+            - 143950.47
+          - - 365422.28
+            - 143947.64
+          - - 365422.80
+            - 143944.80
+          - - 365420.33
+            - 143944.30
+          pedestrian:
+          - - 365420.56
+            - 143946.56
+            - 365420.56
+            - 143947.56
+            - null
+        '5':
+          type: approaching_construction_zone
+          cones:
+          - - 365422.05
+            - 143956.47
+          - - 365422.74
+            - 143954.5
+          - - 365423.03
+            - 143952.8
+          - - 365423.00
+            - 143950.47
+          - - 365423.95
+            - 143947.64
+          - - 365424.52
+            - 143944.80
+          - - 365422.80
+            - 143944.80
+          - - 365420.33
+            - 143944.30
+          pedestrian:
+          - - 365422.55
+            - 143946.32
+            - 365422.55
+            - 143947.32
+            - null
+        '6':
+          type: approaching_construction_zone
+          cones:
+          - - 365424.30
+            - 143928.54
+          - - 365424.42
+            - 143925.52
+          - - 365424.06
+            - 143922.76
+          pedestrian:
+          - - 365423.42
+            - 143926.03
+            - 365423.42
+            - 143927.03
+            - null
+        '7':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365420.6
+            - 143949.66
+            - 365427.59
+            - 143949.83
+            - null
+          - - 365418.51
+            - 143949.66
+            - 365429.59
+            - 143949.83
+            - null
+          - - 365416.51
+            - 143953.66
+            - 365429.59
+            - 143953.83
+            - null
+        '8':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365420.69
+            - 143905.15
+            - 365429.24
+            - 143904.68
+            - null
+          - - 365420.00
+            - 143906.15
+            - 365428.24
+            - 143905.68
+            - null
+        '9':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365414.35
+            - 143967.35
+            - 365420.40
+            - 143975.59
+            - null
     81f400b414215325:
       extra_agents_to_spawn: []
       goal:
@@ -181,6 +495,12 @@ modifications:
           - - 365106.2
             - 143350.05
             - -1.95
+        '1':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365097.18
+            - 143327.38
+            - -1.95
     948201ecfe2c560a:
       extra_agents_to_spawn: []
       goal:
@@ -194,6 +514,24 @@ modifications:
           stopped_vehicle:
           - - 365258.93
             - 143656.6
+            - -2.91
+        '1':
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 365233.73
+            - 143645.03
+            - -2.39
+          - - 365230.64
+            - 143641.08
+            - -1.9896
+          - - 365228.39
+            - 143635.51
+            - -1.90
+        '2':
+          type: nudge_around_parked_vehicle
+          stopped_vehicle:
+          - - 365285.51
+            - 143662.85
             - -2.91
     be26ad0fc1035314:
       extra_agents_to_spawn:
@@ -226,12 +564,38 @@ modifications:
           type: avoid_crashed_cars
           config: gr
           stopped_vehicle:
-          - - 365416.95
-            - 143878.37
+          - - 365419.2
+            - 143876.0
             - 2.0944
           - - 365419.38
             - 143881.56
             - -1.91533
+        '2':
+          type: avoid_crashed_cars
+          config: gr
+          stopped_vehicle:
+          - - 365412.52
+            - 143871.25
+            - -1.9
+          - - 365414.00
+            - 143876.54
+            - -2.4
+        '3':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365429.63
+            - 143948.14
+            - 365421.33
+            - 143945.23
+            - null
+        '4':
+          type: jaywalking_pedestrian
+          pedestrian:
+          - - 365417.01
+            - 143897.03
+            - 365429.84
+            - 143905.31
+            - null
     cd0e827efbe85a8f:
       extra_agents_to_spawn:
       - - 365123.67
@@ -245,6 +609,34 @@ modifications:
         right: null
         straight: null
       spawn_in_intersection: true
+      special_scenario:
+        "0":
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 365123.36
+            - 143390.67
+            - 2.37
+          - - 365118.82
+            - 143391
+            - 0.1
+        "1":
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 365119.91
+            - 143384.32
+            - -2
+          - - 365121.96
+            - 143381.71
+            - -2.7227
+        "2":
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 365117.11
+            - 143379
+            - -1.9896
+          - - 365121.02
+            - 143381.15
+            - -2.72271
     cfad48a855765482:
       extra_agents_to_spawn:
       - - 664578.55
@@ -261,15 +653,36 @@ modifications:
           cones:
           - - 664583.73
             - 3999071.91
-            - -1.54
           - - 664583.11
             - 3999074.39
-            - -1.54
           - - 664582.43
             - 3999077.35
-            - -1.54
+          pedestrian:
+          - - 664584.69
+            - 3999075.68
+            - 664585.69
+            - 3999075.68
+            - null
           config: a0
-    feb82815b92a5512:
+        '1':
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 664571.96
+            - 3999053.03
+            - 1.00821
+          - - 664575.11
+            - 3999053.81
+            - 1.658
+        '2':
+          type: avoid_crashed_cars
+          stopped_vehicle:
+          - - 664575.34
+            - 3999057.21
+            - 1.29154
+          - - 664573.94
+            - 3999052.62
+            - 1.91986
+    feb82815b92a5512: # TODO test
       extra_agents_to_spawn:
       - - 664418.07
         - 3997723.95
@@ -279,6 +692,67 @@ modifications:
         right: 664486.82, 3997505.52
         straight: null
       spawn_in_intersection: true
+    f8684ea2cf1c512b:
+      extra_agents_to_spawn: []
+      goal:
+        left: null
+        right: null
+        straight: null
+      spawn_in_intersection: true
+      roadblock_locations_to_spawn_agents: 
+          - - 365334.31
+            - 143769.16
+      special_scenario:
+        '0':
+          type: overtake_parked_vehicle
+          config: dh
+          stopped_vehicle:
+          - - 365355.37
+            - 143772.85
+            - 0.05
+        '1':
+          type: overtake_parked_vehicle
+          roadblock_locations_to_spawn_agents: []
+          config: dh
+          stopped_vehicle:
+          - - 365355.37
+            - 143772.85
+            - 0.05
+    168c4e592f1b5984:
+      extra_agents_to_spawn: []
+      goal:
+        left: null
+        right: null
+        straight: null
+      spawn_in_intersection: true
+      roadblock_locations_to_spawn_agents: 
+          - - 365429.49
+            - 143926.82
+      special_scenario:
+        '0':
+          type: overtake_parked_vehicle
+          config: dm
+          stopped_vehicle:
+          - - 365423.28
+            - 143917.78
+            - 1.3963
+        '1':
+          type: overtake_parked_vehicle
+          config: dm
+          roadblock_locations_to_spawn_agents: []
+          stopped_vehicle:
+          - - 365423.28
+            - 143917.78
+            - 1.3963
+        '2':
+          type: overtake_parked_vehicle
+          roadblock_locations_to_spawn_agents: []
+          config: a0
+          stopped_vehicle:
+          - - 365416.9
+            - 143966.47
+            - 1.972222
+
 
 
     
