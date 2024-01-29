@@ -27,13 +27,22 @@ class ModificationsSerializableDictionary:
             string, str
         ), f"Class to be of type {str}, but is {type(string)}!"
 
-        for idx, letter in enumerate(string):
-            if idx % 2 != 0:
-                continue  # TODO this doesn't work if amount of agents has more than one digit
+        idx = 0
+        while idx <= len(string) - 1: # Cycle through the string
+
+            letter = string[idx]
+
             if letter == "a":
                 self.dictionary["amount_of_agents"] = int(string[idx + 1])
+            # If s has to digits:
+            elif letter == "s" and idx + 2 <= len(string) - 1 and string[idx + 2].isdigit():
+                self.dictionary["special_scenario"] = string[idx + 1: idx + 3]
+                idx += 1
             else:
                 self.dictionary[self.get_name_of_mod(letter)] = string[idx + 1]
+            
+            idx += 2
+
 
     def to_string(self) -> str:
         string = ""

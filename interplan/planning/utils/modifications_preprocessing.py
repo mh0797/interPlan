@@ -29,8 +29,6 @@ def create_modifications_dictionary(tokens: list):
     for token in tokens:
         if not "-" in token: token = token + "-"
         split = token.split("-")
-        assert len(split[1]) % 2 == 0, f"Token format is not correct in token {token}: \
-            it should consist in pairs of letters-numbers or letters-letters"
         if split[0] not in modifications_dict: modifications_dict[split[0]] = []
         modifications_dict[split[0]].append(split[1])
     return modifications_dict
