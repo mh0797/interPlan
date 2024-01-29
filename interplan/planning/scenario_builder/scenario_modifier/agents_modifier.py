@@ -550,7 +550,7 @@ class AgentsModifier:
             ]:
                 self.cones.append(
                     [
-                        StateSE2(*cone),
+                        StateSE2(*cone[:2], np.random.uniform(low=-np.pi, high=np.pi)),
                         SceneObjectMetadata(
                             timestamp_us=1624917811949521,
                             token=f"{random.randrange(16**16):=16x}",
