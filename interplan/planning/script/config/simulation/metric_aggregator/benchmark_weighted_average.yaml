@@ -50,9 +50,9 @@ closed_loop_reactive_agents_weighted_average:
     low_traffic_density: 1
     medium_traffic_density: 1
     high_traffic_density: 1
-    overtake_parked_vehicle: 10
-    approaching_construction_zone: 10
-    jaywalking_pedestrian: 10
-    nudge_around_parked_vehicle: 10
-    avoid_crashed_cars: 10
+    overtake_parked_vehicle: 1
+    approaching_construction_zone: 1
+    jaywalking_pedestrian: 1
+    nudge_around_parked_vehicle: 1
+    avoid_crashed_cars: 1
   challenge_name: null
