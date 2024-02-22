@@ -2,13 +2,22 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Optional, Tuple, Type
+from shapely import LineString, Point
 
 from nuplan.planning.scenario_builder.abstract_scenario import AbstractScenario
 from nuplan.planning.simulation.callback.abstract_callback import AbstractCallback
 from nuplan.planning.simulation.callback.multi_callback import MultiCallback
-from nuplan.planning.simulation.history.simulation_history import SimulationHistory, SimulationHistorySample
-from nuplan.planning.simulation.history.simulation_history_buffer import SimulationHistoryBuffer
-from nuplan.planning.simulation.planner.abstract_planner import PlannerInitialization, PlannerInput
+from nuplan.planning.simulation.history.simulation_history import (
+    SimulationHistory,
+    SimulationHistorySample,
+)
+from nuplan.planning.simulation.history.simulation_history_buffer import (
+    SimulationHistoryBuffer,
+)
+from nuplan.planning.simulation.planner.abstract_planner import (
+    PlannerInitialization,
+    PlannerInput,
+)
 from nuplan.planning.simulation.simulation_setup import SimulationSetup
 from nuplan.planning.simulation.trajectory.abstract_trajectory import AbstractTrajectory
 from nuplan.common.actor_state.ego_state import EgoState
@@ -34,7 +43,10 @@ class Simulation:
         :param callback: A callback to be executed for this simulation setup
         :param simulation_history_buffer_duration: [s] Duration to pre-load scenario into the buffer.
         """
-        if simulation_history_buffer_duration < simulation_setup.scenario.database_interval:
+        if (
+            simulation_history_buffer_duration
+            < simulation_setup.scenario.database_interval
+        ):
             raise ValueError(
                 f"simulation_history_buffer_duration {simulation_history_buffer_duration} has to be larger than the scenario database_interval {simulation_setup.scenario.database_interval}"
             )
@@ -50,16 +62,26 @@ class Simulation:
         self._callback = MultiCallback([]) if callback is None else callback
 
         # History where the steps of a simulation are stored
-        self._history = SimulationHistory(self._scenario.map_api, self._scenario.get_mission_goal())
+        self._history = SimulationHistory(
+            self._scenario.map_api, self._scenario.get_mission_goal()
+        )
 
         # Rolling window of past states
         # We add self._scenario.database_interval to the buffer duration here to ensure that the minimum
         # simulation_history_buffer_duration is satisfied
-        self._simulation_history_buffer_duration = simulation_history_buffer_duration + self._scenario.database_interval
+        self._simulation_history_buffer_duration = (
+            simulation_history_buffer_duration + self._scenario.database_interval
+        )
 
         # The + 1 here is to account for duration. For example, 20 steps at 0.1s starting at 0s will have a duration
         # of 1.9s. At 21 steps the duration will achieve the target 2s duration.
-        self._history_buffer_size = int(self._simulation_history_buffer_duration / self._scenario.database_interval) + 1
+        self._history_buffer_size = (
+            int(
+                self._simulation_history_buffer_duration
+                / self._scenario.database_interval
+            )
+            + 1
+        )
         self._history_buffer: Optional[SimulationHistoryBuffer] = None
 
         # Flag that keeps track whether simulation is still running
@@ -70,7 +92,11 @@ class Simulation:
         Hints on how to reconstruct the object when pickling.
         :return: Object type and constructor arguments to be used.
         """
-        return self.__class__, (self._setup, self._callback, self._simulation_history_buffer_duration)
+        return self.__class__, (
+            self._setup,
+            self._callback,
+            self._simulation_history_buffer_duration,
+        )
 
     def is_simulation_running(self) -> bool:
         """
@@ -105,14 +131,18 @@ class Simulation:
 
         # Initialize history from scenario
         self._history_buffer = SimulationHistoryBuffer.initialize_from_scenario(
-            self._history_buffer_size, self._scenario, self._observations.observation_type()
+            self._history_buffer_size,
+            self._scenario,
+            self._observations.observation_type(),
         )
 
         # Initialize observations
         self._observations.initialize()
 
         # Add the current state into the history buffer
-        self._history_buffer.append(self._ego_controller.get_state(), self._observations.get_observation())
+        self._history_buffer.append(
+            self._ego_controller.get_state(), self._observations.get_observation()
+        )
 
         # Return the planner initialization structure for this simulation
         return PlannerInitialization(
@@ -130,15 +160,23 @@ class Simulation:
             raise RuntimeError("Simulation was not initialized!")
 
         if not self.is_simulation_running():
-            raise RuntimeError("Simulation is not running, stepping can not be performed!")
+            raise RuntimeError(
+                "Simulation is not running, stepping can not be performed!"
+            )
 
         # Extract current state
         iteration = self._time_controller.get_iteration()
 
         # Extract traffic light status data
-        traffic_light_data = list(self._scenario.get_traffic_light_status_at_iteration(iteration.index))
+        traffic_light_data = list(
+            self._scenario.get_traffic_light_status_at_iteration(iteration.index)
+        )
         logger.debug(f"Executing {iteration.index}!")
-        return PlannerInput(iteration=iteration, history=self._history_buffer, traffic_light_data=traffic_light_data)
+        return PlannerInput(
+            iteration=iteration,
+            history=self._history_buffer,
+            traffic_light_data=traffic_light_data,
+        )
 
     def propagate(self, trajectory: AbstractTrajectory) -> None:
         """
@@ -151,17 +189,23 @@ class Simulation:
             raise RuntimeError("Simulation was not initialized!")
 
         if not self.is_simulation_running():
-            raise RuntimeError("Simulation is not running, simulation can not be propagated!")
+            raise RuntimeError(
+                "Simulation is not running, simulation can not be propagated!"
+            )
 
         # Measurements
         iteration = self._time_controller.get_iteration()
         ego_state, observation = self._history_buffer.current_state
-        traffic_light_status = list(self._scenario.get_traffic_light_status_at_iteration(iteration.index))
+        traffic_light_status = list(
+            self._scenario.get_traffic_light_status_at_iteration(iteration.index)
+        )
 
         # Add new sample to history
         logger.debug(f"Adding to history: {iteration.index}")
         self._history.add_sample(
-            SimulationHistorySample(iteration, ego_state, trajectory, observation, traffic_light_status)
+            SimulationHistorySample(
+                iteration, ego_state, trajectory, observation, traffic_light_status
+            )
         )
 
         # Propagate state to next iteration
@@ -169,13 +213,19 @@ class Simulation:
 
         # Propagate state
         if next_iteration and not self.goal_reached(ego_state):
-            self._ego_controller.update_state(iteration, next_iteration, ego_state, trajectory)
-            self._observations.update_observation(iteration, next_iteration, self._history_buffer)
+            self._ego_controller.update_state(
+                iteration, next_iteration, ego_state, trajectory
+            )
+            self._observations.update_observation(
+                iteration, next_iteration, self._history_buffer
+            )
         else:
             self._is_simulation_running = False
 
         # Append new state into history buffer
-        self._history_buffer.append(self._ego_controller.get_state(), self._observations.get_observation())
+        self._history_buffer.append(
+            self._ego_controller.get_state(), self._observations.get_observation()
+        )
 
     @property
     def scenario(self) -> AbstractScenario:
@@ -216,8 +266,15 @@ class Simulation:
             )
         return self._history_buffer
 
-    def goal_reached(self, goal_state: EgoState) -> bool:
-        if self._scenario.get_mission_goal().distance_to(goal_state.center) < 2:
+    def goal_reached(self, ego_state: EgoState) -> bool:
+        expert_trajectory = LineString(self._scenario.modified_expert_trajectory)
+        if (
+            expert_trajectory.line_locate_point(Point(*ego_state.center))
+            > expert_trajectory.line_locate_point(
+                Point(*self._scenario.get_mission_goal())
+            )
+            - 0.1
+        ):
             return True
         else:
             return False
