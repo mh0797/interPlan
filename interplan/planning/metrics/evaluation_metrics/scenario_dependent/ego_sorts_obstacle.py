@@ -74,12 +74,12 @@ class EgoSortsObstacleStatistics(MetricBase):
             pedestrians_end_locations = [pedestrian[0]._path[-1] for pedestrian in scenario.agents_modifier.pedestrians_list]
             obstacles = [OrientedBox(location, 0.1, 0.1, 0.1) for location in pedestrians_end_locations]
 
-        min_progress = min(ego_expert_linestring.project(Point(obstacle.center.x, obstacle.center.y)) for obstacle in obstacles) \
+        max_obstacle_progress = max(ego_expert_linestring.project(Point(obstacle.center.x, obstacle.center.y)) for obstacle in obstacles) \
             / ego_expert_linestring.length
             
         # Load ego_progress_along_expert_route ratio
         ego_sorts_construction_zone = (
-            self._ego_progress_along_expert_route_metric.results[0].statistics[-1].value >= min_progress
+            self._ego_progress_along_expert_route_metric.results[0].statistics[-1].value >= max_obstacle_progress
         )
         statistics = [
             Statistic(
