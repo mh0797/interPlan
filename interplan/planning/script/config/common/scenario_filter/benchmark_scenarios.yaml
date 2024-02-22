@@ -15,7 +15,7 @@ scenario_tokens:                # List of scenario tokens to include
 log_names: ${splitter.log_splits.test}  # Use all logs present in the test split
 map_names: null                     # Filter scenarios by map names
 
-num_scenarios_per_type: 100         # Number of scenarios per type
+num_scenarios_per_type: null         # Number of scenarios per type
 limit_total_scenarios: null         # Limit total scenarios (float = fraction, int = num) - this filter can be applied on top of num_scenarios_per_type
 timestamp_threshold_s: null         # Filter scenarios to ensure scenarios have more than `timestamp_threshold_s` seconds between their initial lidar timestamps
 ego_displacement_minimum_m: null    # Whether to remove scenarios where the ego moves less than a certain amount
@@ -530,7 +530,7 @@ modifications:
         '2':
           type: nudge_around_parked_vehicle
           stopped_vehicle:
-          - - 365285.51
+          - - 365285.31
             - 143662.85
             - -2.91
     be26ad0fc1035314:
