@@ -18,7 +18,9 @@ from nuplan.planning.simulation.observation.idm.idm_states import IDMLeadAgentSt
 from nuplan.planning.simulation.observation.idm.utils import path_to_linestring
 from nuplan.planning.simulation.observation.observation_type import DetectionsTracks
 from nuplan.planning.simulation.occupancy_map.abstract_occupancy_map import OccupancyMap
-from nuplan.planning.simulation.observation.idm.idm_agents_builder import get_starting_segment
+from nuplan.planning.simulation.observation.idm.idm_agents_builder import (
+    get_starting_segment,
+)
 from scipy.spatial.distance import cdist
 from shapely.geometry.base import CAP_STYLE
 
@@ -32,12 +34,14 @@ from interplan.planning.utils.agent_utils import get_agent_constant_velocity_geo
 
 UniqueIDMAgents = Dict[str, IDMAgent]
 
+
 class IDMAgentsBehavior(Enum):
     # Class to define behavior or the agents in the whole simulation
     DEFAULT = 1
     ASSERTIVE = 2
     CAUTIOUS = 3
     MIXED = 4
+
 
 class IDMAgentManager:
     """IDM smart-agents manager."""
@@ -58,7 +62,9 @@ class IDMAgentManager:
         self.agents: UniqueIDMAgents = agents
         self.agent_occupancy = agent_occupancy
         self._map_api = map_api
-        self.IDM_agents_behavior = IDMAgentsBehavior.__members__[IDM_agents_behavior.upper()]
+        self.IDM_agents_behavior = IDMAgentsBehavior.__members__[
+            IDM_agents_behavior.upper()
+        ]
 
     def propagate_agents(
         self,
@@ -133,13 +139,10 @@ class IDMAgentManager:
                     if agent_lane.contains_point(ego_state.center.point):
                         intersecting_agents.remove(["ego_expanded"])
                     # Elif ego is in the same roadblock as agent
-                    elif (
-                        ego_roadblock_id == agent_lane.get_roadblock_id()
-                    ):
+                    elif ego_roadblock_id == agent_lane.get_roadblock_id():
                         # If agent is cautious but ego is behind the agent, remove ego expanded
                         if (
-                            self.IDM_agents_behavior == IDMAgentsBehavior.CAUTIOUS
-                            and absolute_to_relative_poses(
+                            absolute_to_relative_poses(
                                 [agent.to_se2(), ego_state.center]
                             )[1].x
                             < 0
@@ -147,10 +150,12 @@ class IDMAgentManager:
                             intersecting_agents.remove(["ego_expanded"])
                         elif self.IDM_agents_behavior == IDMAgentsBehavior.ASSERTIVE:
                             intersecting_agents.remove(["ego_expanded"])
-                        elif self.IDM_agents_behavior == IDMAgentsBehavior.MIXED and random.randint(
-                            0, 1
+                        elif (
+                            self.IDM_agents_behavior == IDMAgentsBehavior.MIXED
+                            and random.randint(0, 1)
                         ):
                             intersecting_agents.remove(["ego_expanded"])
+                        # Else Means that agent will behave cautious
                     # Elif agents have standard behavior they ignore ego expanded
                     elif self.IDM_agents_behavior == IDMAgentsBehavior.DEFAULT:
                         intersecting_agents.remove(["ego_expanded"])
@@ -173,7 +178,10 @@ class IDMAgentManager:
                     ) = intersecting_agents.get_nearest_entry_to(agent_token)
                     agent_heading = agent.to_se2().heading
 
-                    if "ego" in nearest_id and not agent_behavior == AgentBehavior.CAUTIOUS:
+                    if (
+                        "ego" in nearest_id
+                        and not agent_behavior == AgentBehavior.CAUTIOUS
+                    ):
                         ego_velocity = ego_state.dynamic_car_state.rear_axle_velocity_2d
                         longitudinal_velocity = np.hypot(ego_velocity.x, ego_velocity.y)
                         relative_heading = ego_state.rear_axle.heading - agent_heading
