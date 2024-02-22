@@ -158,7 +158,7 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                                 if modification in valid_tokens:
                                     if (
                                         modifications_dict.dictionary[modification]
-                                        not in valid_tokens[modification]
+                                        not in [str(item) for item in valid_tokens[modification]]
                                     ):
                                         delete_bool = True
                                         logger.info(

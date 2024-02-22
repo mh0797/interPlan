@@ -629,8 +629,10 @@ class AgentsModifier:
                         ego_current_lane.baseline_path.discrete_path[-1]
                     )
 
-                # If ego is 25 meters along the route where it will meet with pedestrian, pedestrian becomes active
-                if abs(pedestrian_progress - ego_current_progress) <= 50:
+                # If ego is distance_to_activate_pedestrian meters along the route where it will meet with pedestrian,
+                # pedestrian becomes active
+                distance_to_activate_pedestrian = 50
+                if abs(pedestrian_progress - ego_current_progress) <= distance_to_activate_pedestrian:
                     iteration_to_activate = iteration
                     self.pedestrians_list[index][2] = iteration
                 else:

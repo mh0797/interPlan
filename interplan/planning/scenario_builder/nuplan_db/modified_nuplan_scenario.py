@@ -232,13 +232,13 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             # So that iteration = 0 -> index = 0 ... iteration = self.get_number_of_iterations() -> index = len(modified_expert_trajectory)
             index = int(
                 (
-                    len(self.get_modified_expert_trajectory)
+                    len(self.modified_expert_trajectory)
                     / self.get_number_of_iterations()
                 )
                 * iteration
             )
             return EgoState.build_from_center(
-                self.get_modified_expert_trajectory[index],
+                self.modified_expert_trajectory[index],
                 self.initial_ego_state.dynamic_car_state.center_velocity_2d,
                 self.initial_ego_state.dynamic_car_state.center_acceleration_2d,
                 self.initial_ego_state.tire_steering_angle,
@@ -249,7 +249,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
             return super().get_ego_state_at_iteration(iteration)
 
     @cached_property
-    def get_modified_expert_trajectory(self) -> List[EgoState]:
+    def modified_expert_trajectory(self) -> List[EgoState]:
         modified_expert_trajectory = []
 
         for edge in self.expert_route_lane_sequence:
