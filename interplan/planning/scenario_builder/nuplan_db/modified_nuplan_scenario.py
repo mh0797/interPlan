@@ -217,36 +217,43 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         return DetectionsTracks(tracked_objects), modified_ego_speed
 
     def get_ego_state_at_iteration(self, iteration: int) -> EgoState:
-        if "goal" in self.modification:
-            if iteration == 0:
-                initial_ego_state = get_ego_state_for_lidarpc_token_from_db(
-                    self._log_file, self._lidarpc_tokens[iteration]
-                )
-                # Set the new speed that ego should have if it spawn among new spawned agents
-                if self.modified_initial_ego_speed:
-                    initial_ego_state.dynamic_car_state.rear_axle_velocity_2d.x = (
-                        self.modified_initial_ego_speed
-                    )
-                return initial_ego_state
-
-            # So that iteration = 0 -> index = 0 ... iteration = self.get_number_of_iterations() -> index = len(modified_expert_trajectory)
-            index = int(
-                (
-                    len(self.modified_expert_trajectory)
-                    / self.get_number_of_iterations()
-                )
-                * iteration
-            )
-            return EgoState.build_from_center(
-                self.modified_expert_trajectory[index],
-                self.initial_ego_state.dynamic_car_state.center_velocity_2d,
-                self.initial_ego_state.dynamic_car_state.center_acceleration_2d,
-                self.initial_ego_state.tire_steering_angle,
-                self.initial_ego_state.time_point,
-                self.initial_ego_state.car_footprint.vehicle_parameters,
-            )
-        else:
+        if "goal" not in self.modification:
             return super().get_ego_state_at_iteration(iteration)
+        
+        if iteration == 0:
+            return self.initial_ego_state
+
+        index = int(
+            (
+                len(self.modified_expert_trajectory)
+                / self.get_number_of_iterations()
+            )
+            * iteration
+        )
+        return EgoState.build_from_center(
+            self.modified_expert_trajectory[index],
+            # remaining components are unused, thus we pad with the initial state
+            self.initial_ego_state.dynamic_car_state.center_velocity_2d,
+            self.initial_ego_state.dynamic_car_state.center_acceleration_2d,
+            self.initial_ego_state.tire_steering_angle,
+            self.initial_ego_state.time_point,
+            self.initial_ego_state.car_footprint.vehicle_parameters,
+        )
+        
+    @cached_property
+    def initial_ego_state(self) -> EgoState:
+        """
+        caches the initial ego state (instead of just providing it as a property)
+        """
+        initial_ego_state = get_ego_state_for_lidarpc_token_from_db(
+            self._log_file, self._lidarpc_tokens[0]
+        )
+        # Set the new speed that ego should have if it spawn among new spawned agents
+        if self.modified_initial_ego_speed:
+            initial_ego_state.dynamic_car_state.rear_axle_velocity_2d.x = (
+                self.modified_initial_ego_speed
+            )
+        return initial_ego_state
 
     @cached_property
     def modified_expert_trajectory(self) -> List[EgoState]:
