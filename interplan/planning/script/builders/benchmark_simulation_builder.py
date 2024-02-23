@@ -119,11 +119,10 @@ def build_simulations(
                 cfg.simulation_time_controller, scenario=scenario
             )
             if "observation" in scenario.modification:
-                if scenario.modification["observation"] in cfg.scenario_filter.valid_tokens[scenario.token].observation:
-                    cfg.observation["IDM_agents_behavior"] = \
-                        observation_modification_character_to_command[scenario.modification["observation"]]
-                else:
-                    raise ValueError( f"The option \"{scenario.modification['observation']}\" is not a valid opcion for Observation" )
+                cfg.observation["IDM_agents_behavior"] = \
+                    observation_modification_character_to_command.get(scenario.modification["observation"], "Not_Valid_Observation")
+                if cfg.observation["IDM_agents_behavior"] == "Not_Valid_Observation":
+                    raise ValueError( f"The option \"{scenario.modification['observation']}\" is not a valid option for Observation" )
 
             # Perception
             observations: AbstractObservation = build_observations(

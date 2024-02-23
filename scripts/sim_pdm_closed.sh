@@ -4,7 +4,6 @@ INTERPLAN_PLUGIN_ROOT=/home/aah1si/llm_nuplan/interplan-plugin
 
 python $INTERPLAN_PLUGIN_ROOT/interplan/planning/script/run_simulation.py \
 +simulation=default_interplan_benchmark \
-scenario_filter.only_in_benchmark_scenarios=False \
 planner=pdm_closed_planner \
 experiment_name=$EXPERIMENT \
 hydra.searchpath="[\

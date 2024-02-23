@@ -135,7 +135,6 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
             for scenario_specific_mod in scenario_filter.modifications[
                 "scenario_specifics"
             ][idx]:
-                delete_bool = False
 
                 # Create a dictionary with the modifications of a single scenario
                 modifications_dict = ModDict({})
@@ -146,39 +145,18 @@ class NuPlanModifiedScenarioBuilder(NuPlanScenarioBuilder):
                         ] = scenario_filter.modifications[modification_category]
                     else:
                         modifications_dict.add_scenario_specifics(scenario_specific_mod)
-                        if scenario_filter.only_in_benchmark_scenarios:
-                            assert (
-                                scenario_filter.scenario_tokens[idx]
-                                in scenario_filter.valid_tokens
-                            ), f"{scenario_filter.scenario_tokens[idx]} is not in the list of valid tokens."
-                            valid_tokens = scenario_filter.valid_tokens[
-                                f"{scenario_filter.scenario_tokens[idx]}"
-                            ]
-                            for modification in modifications_dict.dictionary:
-                                if modification in valid_tokens:
-                                    if (
-                                        modifications_dict.dictionary[modification]
-                                        not in [str(item) for item in valid_tokens[modification]]
-                                    ):
-                                        delete_bool = True
-                                        logger.info(
-                                            "Deleting token "
-                                            + modifications_dict.to_string()
-                                            + " because it is not part of the benchmark"
-                                        )
 
-                if not delete_bool:
-                    # Create and add info of the scenario into a dictionary with multiple scenarios
-                    if (
-                        f"{scenario_filter.scenario_tokens[idx]}"
-                        not in scenarios_modifications_dict.keys()
-                    ):
-                        scenarios_modifications_dict[
-                            f"{scenario_filter.scenario_tokens[idx]}"
-                        ] = []
+                # Create and add info of the scenario into a dictionary with multiple scenarios
+                if (
+                    f"{scenario_filter.scenario_tokens[idx]}"
+                    not in scenarios_modifications_dict.keys()
+                ):
                     scenarios_modifications_dict[
                         f"{scenario_filter.scenario_tokens[idx]}"
-                    ].append(modifications_dict)
+                    ] = []
+                scenarios_modifications_dict[
+                    f"{scenario_filter.scenario_tokens[idx]}"
+                ].append(modifications_dict)
 
         map_parameters = [
             GetScenariosFromDbFileParams(
