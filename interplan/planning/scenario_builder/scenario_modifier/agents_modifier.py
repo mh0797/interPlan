@@ -75,6 +75,7 @@ class AgentsModifier:
         log_file: str,
         token_list: str,
         modification_details_dictionary: Dict = {},
+        ego_lane = None
     ) -> None:
         if not modification:
             logger.warning(
@@ -98,7 +99,10 @@ class AgentsModifier:
         self.modified_ego_speed = (
             self.ego_state.dynamic_car_state.speed
         )  # By default the default speed of ego in the scenario
-        self.ego_lane, _ = get_starting_segment(self.ego_state, self.map_api)
+        if ego_lane:
+            self.ego_lane = ego_lane
+        else:
+            self.ego_lane, _ = get_starting_segment(self.ego_state, self.map_api)
         self.dmax = modification["decel_max"] if "decel_max" in modification else 2
         self.acomf = modification["accel_max"] if "decel_max" in modification else 1
         self.deleted_agents = []

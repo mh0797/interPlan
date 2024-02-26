@@ -139,6 +139,11 @@ class ModifiedNuPlanScenario(NuPlanScenario):
         else:
             self.goal_location = None
 
+        # Get ego_lane
+        ego_lane = next(iter(get_route(
+            self.map_api, extract_ego_center([super().get_ego_state_at_iteration(0)])
+        )[0]), None)
+
         # Initialize agent modifier if necessary
         if modification.augment_agents():
             self.agents_modifier = AgentsModifier(
@@ -147,6 +152,7 @@ class ModifiedNuPlanScenario(NuPlanScenario):
                 self._log_file,
                 self._lidarpc_tokens,
                 self.mod_details,
+                ego_lane = ego_lane
             )
             (
                 _,
