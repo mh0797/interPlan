@@ -1,0 +1,15 @@
+dtpp_planner:
+  _target_: tuplan_garage.planning.simulation.planner.dtpp_planner.dtpp_planner.DTPPPlanner
+  _convert_: 'all'
+
+  max_len: 120  # max lenght of the proposals
+  vehicle_width: 2.297 # vehicle width used to calculate collisions
+  future_horizon: 8 # future planning horizon
+  step_interval: 0.1 # sampling interval of trajectories
+  encoder_checkpoint: ${oc.env:NUPLAN_EXP_ROOT}/checkpoints/dtpp_encoder_checkpoint.pth # path to encoder checkpoint
+  decoder_checkpoint: ${oc.env:NUPLAN_EXP_ROOT}/checkpoints/dtpp_decoder_checkpoint.pth # path to decoder checkpoint
+
+  n_candidates_expand: 5 # number of nodes per stage to expand
+  n_candidates_max: 30 # maximum number of nodes per stage
+  target_speed: 13 # target speed [m/s]
+  first_stage_horizon: 3.0 # horizon of first stage
