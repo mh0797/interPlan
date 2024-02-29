@@ -468,15 +468,18 @@ class AgentsModifier:
         agent: ModifiedAgent
 
         # Check for agents that intersects THIS agent's path
-        agent_path = path_to_linestring(agent.get_path_to_go(3))
+        agent_path = path_to_linestring(agent.get_path_to_go(2))
         intersecting_agents = self.get_extended_occupancy_map().intersects(
             agent_path.buffer((agent._box.width / 2), cap_style=CAP_STYLE.flat)
         )
 
         if intersecting_agents.size > 0:
-            if behavior != AgentBehavior.STOPPED:
+            roadblock = self.map_api.get_one_map_object(location.point, SemanticMapLayer.ROADBLOCK) or \
+                self.map_api.get_all_map_objects(location.point, SemanticMapLayer.ROADBLOCK_CONNECTOR)[0]
+            roadblock_id = roadblock.id
+            if behavior != AgentBehavior.STOPPED and roadblock_id != self.ego_lane.get_roadblock_id():
                 return
-            else:
+            elif behavior == AgentBehavior.STOPPED:
                 # If we are spawning a stopped vehicle over a already (not stopped) spawned vehicle,
                 # the other vehicle gets deleted
                 for intersecting_agent_id in intersecting_agents.get_all_ids():
