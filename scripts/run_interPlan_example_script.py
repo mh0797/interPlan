@@ -5,8 +5,6 @@ from nuplan.planning.script.run_simulation import main as main_simulation
 import warnings
 warnings.filterwarnings('ignore', message="(.|\n)*invalid value encountered in line_locate_point")
 
-from interplan.planning.utils.modifications_preprocessing import preprocess_scenario_filter
-
 #-------------------------------------------------
 # Run simulation
 #-------------------------------------------------
@@ -26,22 +24,19 @@ CHECKPOINT_URBANDRIVER = Path(experiments_path + "model_checkpoints/checkpoints/
 
 
 # Select the planner and simulation challenge
-PLANNER = ['idm_mobil_planner']
-# Options are: ["idm_planner", 'idm_mobil_planner', "pdm_closed_planner", "pdm_open_planner", "urban_driver_planner", "gc_pgp_planner"]
-CHALLENGE = 'run_benchmark' 
+PLANNER = ["idm_planner", 'idm_mobil_planner', "pdm_closed_planner", "pdm_open_planner", "urban_driver_planner", "gc_pgp_planner", "gameformer_planner", "dtpp_planner"]
+# Options are: [["idm_planner", 'idm_mobil_planner', "pdm_closed_planner", "pdm_open_planner", "urban_driver_planner", "gc_pgp_planner", "gameformer_planner", "dtpp_planner"]]
+CHALLENGE = 'default_interplan_benchmark'
 DATASET_PARAMS = [
-    "scenario_filter=benchmark_scenarios",
-    "scenario_filter.scenario_tokens=[71f182558ee95100-s0, cd0e827efbe85a8f-s0, cfad48a855765482-s0, 2d62c3139aa95007-s0, c710330e5114501c-s0, c710330e5114501c-s1, 5016a2a4ad1350d6-s0]",
-    "scenario_builder=nuplan_modifications",
+    #"scenario_filter=interplan10", default: benchmark_scenarios
+    #"scenario_filter.scenario_tokens=[71f182558ee95100-s0, cd0e827efbe85a8f-s0, cfad48a855765482-s0, 2d62c3139aa95007-s0, c710330e5114501c-s0, c710330e5114501c-s1, 5016a2a4ad1350d6-s0]",
 
     f"planner.pdm_open_planner.checkpoint_path={CHECKPOINT_PDM}",
     f"planner.urban_driver_planner.checkpoint_path={CHECKPOINT_URBANDRIVER}" ,
     f"planner.gc_pgp_planner.checkpoint_path={CHECKPOINT_GCPGP}", 
     "+model@urban_driver_model=urban_driver_open_loop_model",
     "+model@gc_pgp_model=gc_pgp_model", 
-    "model=gc_pgp_model", # The GCPGP Model has to have this 
-    "gc_pgp_model.aggregator.pre_train=false", 
-
+    
     'hydra.searchpath=[\
         \"pkg://interplan.planning.script.config.common\", \
         \"pkg://interplan.planning.script.config.simulation\", \
@@ -51,7 +46,6 @@ DATASET_PARAMS = [
         \"pkg://nuplan.planning.script.config.common\", \
         \"pkg://nuplan.planning.script.experiments\"]', 
                 ]
-
 
 # Name of the experiment
 EXPERIMENT = 'simulation_simple_experiment'
@@ -69,8 +63,6 @@ cfg = hydra.compose(config_name=CONFIG_NAME, overrides=[
     *DATASET_PARAMS,
 ])
 
-# Proprocess token Names
-preprocess_scenario_filter(cfg)
 
 # Run the simulation loop (real-time visualization not yet supported, see next section for visualization)
 main_simulation(cfg)
