@@ -288,6 +288,8 @@ class AgentsModifier:
                 )
 
                 progress_along_line -= distance_to_leading_car
+                if progress_along_line < 0:
+                    continue
 
                 if (
                     lane.id == self.ego_lane.id
