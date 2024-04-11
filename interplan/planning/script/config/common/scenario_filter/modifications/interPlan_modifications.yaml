@@ -632,7 +632,7 @@ modification_details_dictionary: # Not to be modified by the user
         - - 664573.94
           - 3999052.62
           - 1.91986
-  feb82815b92a5512: # TODO test
+  feb82815b92a5512:
     extra_agents_to_spawn:
     - - 664418.07
       - 3997723.95

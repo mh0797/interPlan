@@ -137,8 +137,8 @@ class LaneChangesToGoalStatistics(MetricBase):
                             break
                     else:
                         AssertionError(
-                            "Ego only drove by NuPlanLaneConnectors no calculation of this metric possible"
-                        )  # TODO
+                            "Ego only drove along NuPlanLaneConnectors no calculation of this metric possible"
+                        )
                     break
 
             assert (

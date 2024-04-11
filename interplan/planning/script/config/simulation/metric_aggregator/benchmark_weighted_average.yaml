@@ -6,7 +6,7 @@ closed_loop_reactive_agents_weighted_average:
     # metric name : metric weight in the weighted average function
     ego_progress_along_expert_route: 5.0 # This metric has the highest weight equal to 5.0 in the weighted average function, its base score can take a value in [0,1] depending on the ratio of ego to expert progress
     time_to_collision_within_bound: 5.0 # This metric has the highest weight equal to 5.0 in the weighted average function, its base score can be 0 or 1 depending on the minimum time to collision threshold
-    lane_changes_to_goal: 4.0 # TODO
+    lane_changes_to_goal: 4.0 # This metric has a weight equal to 4.0 in the weighted average function, its base score can take a value in [0,1]
     speed_limit_compliance: 4.0 # This metric has a weight equal to 4.0 in the weighted average function, its base score can take a value in [0,1] depending on the amount and duration of over-speeding
     ego_is_comfortable: 2.0 # This metric has the lowest weight equal to 2.0 in the weighted average function, its base score can be 0 or 1 depending on the comfort thresholds on acceleration, jerk and yaw.
     default: 1.0

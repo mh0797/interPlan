@@ -57,7 +57,6 @@ def build_metrics_engines(cfg: DictConfig, scenarios: List[AbstractScenario]) ->
         # Metrics
         metric_engine = MetricsEngine(main_save_path=main_save_path)
 
-        # TODO: Add scope checks
         scenario_type = scenario.scenario_type
         scenario_metrics: DictConfig = simulation_metrics.get(scenario_type, {})
         metrics_in_scope = low_level_metrics.copy()

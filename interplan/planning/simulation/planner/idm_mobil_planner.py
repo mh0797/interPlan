@@ -148,7 +148,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
     ) -> AbstractTrajectory:
         """Inherited, see superclass."""
 
-        # Adding past trayectory to past_trajectory attribute of agents for later acceleration calculation TODO Should this be here?
         self.update_observations(current_input)
 
         # Ego current state
@@ -284,7 +283,10 @@ class IDMMobilPlanner(AbstractIDMPlanner):
             desired_ego_state.center.heading,
             0,
         )
-        threshold_to_change = 0.5  # seconds while ego will continue its path until its path change lanes TODO config
+        
+        #TODO: add parameter to config
+        # seconds while ego will continue its path until its path change lanes
+        threshold_to_change = 0.5 
         start_manouver_progress = (
             current_ego_idm_state.progress
             + current_ego_state.dynamic_car_state.center_velocity_2d.x
@@ -830,7 +832,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         Do a graph search to return a ego path beginning from adjacent lane.
         :return: An interpolated path representing the ego's path.
         """
-        # TODO not always is one before the current edge (lane.incoming_edges[0])
         graph_search = BreadthFirstSearch(
             lane.incoming_edges[0], self._candidate_lane_edge_ids
         )
@@ -965,9 +966,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         :param occupancy_map: OccupancyMap containing all objects in the scene.
         :param unique_observations: A mapping between the object token and the object itself.
         """
-        # TODO change this description / check other descriptions
-        # Note: this could be done in a simpler way by making a list of agents in lanes but this would only work when follower vehicle
-        #       is in the same lane as the ego.
         extended_occupancy_map = STRTreeOccupancyMap({})
         # Only take into account agents that are not false vehicle because false vehicle should never be behind of ego
         for obs in [
@@ -987,7 +985,7 @@ class IDMMobilPlanner(AbstractIDMPlanner):
             intersecting_agents.set(agent_id, occupancy_map.get(agent_id))
 
         # Check if there are agents intersecting the ego's baseline
-        if intersecting_agents.size > 0:  # TODO this case is was not tested yet
+        if intersecting_agents.size > 0:
             # Extract closest object
             intersecting_agents.insert(
                 self._ego_token, ego_state.car_footprint.geometry
@@ -1019,7 +1017,6 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         :param relative_distance: [m] The relative distance from the scene object to the ego.
         :return: A IDM lead agents state
         """
-        # TODO change this description
         if isinstance(agent, Agent):
             # Dynamic object
             longitudinal_velocity = agent.velocity.magnitude()
@@ -1092,7 +1089,7 @@ class IDMMobilPlanner(AbstractIDMPlanner):
                     max_IOLOR = max(list(indices_of_lanes_on_route))
                     for idx, edge in enumerate(
                         block.interior_edges
-                    ):  # TODO not entering here if it is full of ones
+                    ): 
                         if idx < min_IOLOR:
                             lanes_on_route[idx] = min_IOLOR - idx
                         elif idx > max_IOLOR:
@@ -1109,7 +1106,7 @@ class IDMMobilPlanner(AbstractIDMPlanner):
         ]
         # Propagate route info
         for roadblock in reversed(self._route_roadblocks[:-1]):
-            # TODO doesn't consider lane connectors since mobil doesn't change in lane connectors anyways
+            # TODO: doesn't consider lane connectors since mobil doesn't change in lane connectors anyways
             if roadblock.id in self._distances_to_lane_on_route and all(
                 v == 0 for v in self._distances_to_lane_on_route[roadblock.id]
             ):

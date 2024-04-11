@@ -166,8 +166,6 @@ class IDMAgentManager:
                     ):
                         intersecting_agents.remove(["ego_expanded"])
 
-                    # TODO check this logic with the aditions of behavior properties to agents
-
                 # Checking if there are agents intersecting THIS agent's baseline.
                 # Hence, we are checking for at least 2 intersecting agents.
                 if intersecting_agents.size > 1:

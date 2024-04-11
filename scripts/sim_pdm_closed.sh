@@ -1,6 +1,6 @@
 EXPERIMENT=sim_interplan_pdm_closed
-NUPLAN_EXP_ROOT=/home/aah1si/llm_nuplan/exp/
-INTERPLAN_PLUGIN_ROOT=/home/aah1si/llm_nuplan/interplan-plugin
+NUPLAN_EXP_ROOT=~/interplan_workspace/exp/
+INTERPLAN_PLUGIN_ROOT=~/interplan_workspace/interplan-plugin
 
 python $INTERPLAN_PLUGIN_ROOT/interplan/planning/script/run_simulation.py \
 +simulation=default_interplan_benchmark \

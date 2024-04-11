@@ -588,7 +588,7 @@ class AgentsModifier:
             elif "density" in self.modification.keys():
                 self.delete_percentage_of_agents(0)
                 self.spawn_agents(density=self.modification["density"])
-            # TODO no input
+            
             if "special_scenario" in self.modification.keys():
                 if not "density" in self.modification.keys():
                     self.delete_percentage_of_agents(0)
@@ -722,7 +722,7 @@ class ModifiedAgent(Agent):
 
     def get_path_to_go(self, seconds=3):
         """
-        Get trayectory of the agent by doing a constant velocity proyection.
+        Get trajectory of the agent by doing a constant velocity projection.
         The path will start from location of the back side of the car in the current position and will end in the location
         of the front part of the vehicle in the last position droven by the car.
 
