@@ -1,0 +1,14 @@
+idm_mobil_planner:
+  _target_: interplan.planning.simulation.planner.idm_mobil_planner.IDMMobilPlanner
+  _convert_: 'all'
+  target_velocity: 10             # Desired velocity in free traffic [m/s]
+  min_gap_to_lead_agent: 1.0      # Minimum relative distance to lead vehicle [m]
+  headway_time: 1.5               # Desired time headway. The minimum possible time to the vehicle in front [s]
+  accel_max: 1.0                  # Maximum acceleration [m/s^2]
+  decel_max: 3.0                  # Maximum deceleration (positive value) [m/s^2]
+  planned_trajectory_samples: 16  # Number of trajectory samples to generate
+  planned_trajectory_sample_interval: 0.5  # The sampling time interval between samples [s]
+  occupancy_map_radius: 40        # The range around the ego to add objects to be considered [m]
+  politeness_factor: 0.5          # Politeness term for calculating change of lanes (see MOBIL equations)
+  changing_threshold: 0.2           # changing threshold term for calculating change of lanes (see MOBIL equations)
+  push_lane_change: true           # whether to make the ego vehicle slow down to push the lane change

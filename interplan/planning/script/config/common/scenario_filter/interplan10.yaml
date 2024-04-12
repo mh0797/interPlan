@@ -1,0 +1,122 @@
+_target_: interplan.planning.scenario_builder.benchmark_scenario_filter.BenchmarkScenarioFilter
+_convert_: 'all'
+
+defaults:
+  # Add common items
+  - modifications: interPlan_modifications
+
+scenario_types:  null                # List of scenario types to include
+scenario_tokens:                # List of scenario tokens to include
+# low traffic density
+  - d480a5d2b0fe5fe6-dlgloa
+  - d480a5d2b0fe5fe6-dlglom
+  - d480a5d2b0fe5fe6-dlgloc
+  - feb82815b92a5512-dlgloa
+  - feb82815b92a5512-dlglom
+  - feb82815b92a5512-dlgloc
+  - feb82815b92a5512-dlgroa
+  - feb82815b92a5512-dlgrom
+  - feb82815b92a5512-dlgroc
+  - 7bc92573f75d5a4c-dlgrom
+# medium traffic density
+  - d480a5d2b0fe5fe6-dmgloa
+  - d480a5d2b0fe5fe6-dmglom
+  - d480a5d2b0fe5fe6-dmgloc
+  - feb82815b92a5512-dmgloa
+  - feb82815b92a5512-dmglom
+  - feb82815b92a5512-dmgloc
+  - feb82815b92a5512-dmgroa
+  - feb82815b92a5512-dmgrom
+  - feb82815b92a5512-dmgroc
+  - 7bc92573f75d5a4c-dmgrom
+# high traffic density
+  - d480a5d2b0fe5fe6-dhgloa
+  - d480a5d2b0fe5fe6-dhglom
+  - d480a5d2b0fe5fe6-dhgloc
+  - feb82815b92a5512-dhgloa
+  - feb82815b92a5512-dhglom
+  - feb82815b92a5512-dhgloc
+  - feb82815b92a5512-dhgroa
+  - feb82815b92a5512-dhgrom
+  - feb82815b92a5512-dhgroc
+  - 7bc92573f75d5a4c-dhgrom
+# approaching construction zone
+  - 6dd2064204c654b7-s0
+  - 5016a2a4ad1350d6-s0
+  - 71f182558ee95100-s5
+  - 71f182558ee95100-s4
+  - 71f182558ee95100-s6
+  - 5016a2a4ad1350d6-s1
+  - 5016a2a4ad1350d6-s2
+  - 5016a2a4ad1350d6-s3
+  - 2d62c3139aa95007-s6
+  - 2d62c3139aa95007-s7
+# avoiding crashed cars
+  - c710330e5114501c-s0
+  - c710330e5114501c-s1
+  - c710330e5114501c-s2
+  - cd0e827efbe85a8f-s0
+  - cd0e827efbe85a8f-s2
+  - cd0e827efbe85a8f-s1
+  - 948201ecfe2c560a-s1
+  - 6dd2064204c654b7-s2
+  - 6dd2064204c654b7-s1
+  - 2d62c3139aa95007-s2
+# jaywalking pedestrian
+  - 71f182558ee95100-s0
+  - 71f182558ee95100-s7
+  - 71f182558ee95100-s8
+  - 71f182558ee95100-s9
+  - 2d62c3139aa95007-s10
+  - 2d62c3139aa95007-s11
+  - 2d62c3139aa95007-s8
+  - 2d62c3139aa95007-s9
+  - c710330e5114501c-s4
+  - c710330e5114501c-s3
+# nudge around parked vehicle
+  - 81f400b414215325-s0
+  - 948201ecfe2c560a-s0
+  - 81f400b414215325-s1
+  - 71f182558ee95100-s1
+  - 71f182558ee95100-s2
+  - 948201ecfe2c560a-s2
+  - 2d62c3139aa95007-s3
+  - 2d62c3139aa95007-s4
+  - 2d62c3139aa95007-s5
+  - 71f182558ee95100-s3
+# overtake parked vehicle
+  - 2d62c3139aa95007-s0
+  - 2d62c3139aa95007-s1
+  - 2d62c3139aa95007-s12
+  - 2d62c3139aa95007-s13
+  - 2d62c3139aa95007-s14
+  - f8684ea2cf1c512b-s0
+  - f8684ea2cf1c512b-s1
+  - 168c4e592f1b5984-s2
+  - 168c4e592f1b5984-s0
+  - 168c4e592f1b5984-s1
+
+
+# log_names: ${splitter.log_splits.test}  # Use all logs present in the test split
+log_names:
+  - '2021.05.25.12.30.39_veh-25_00321_01196'
+  - '2021.05.25.14.16.10_veh-35_00083_00485'
+  - '2021.10.06.04.07.24_veh-49_00776_01719'
+  - '2021.06.28.21.29.28_veh-16_01912_03183'
+  - '2021.10.06.02.32.50_veh-53_00633_00800'
+  - '2021.06.03.12.02.06_veh-35_04692_04763'
+  - '2021.09.22.03.46.15_veh-51_01522_02013'
+map_names: null                     # Filter scenarios by map names
+
+num_scenarios_per_type: 10         # Number of scenarios per type
+limit_total_scenarios: null         # Limit total scenarios (float = fraction, int = num) - this filter can be applied on top of num_scenarios_per_type
+timestamp_threshold_s: null         # Filter scenarios to ensure scenarios have more than `timestamp_threshold_s` seconds between their initial lidar timestamps
+ego_displacement_minimum_m: null    # Whether to remove scenarios where the ego moves less than a certain amount
+ego_start_speed_threshold: null     # Limit to scenarios where the ego reaches a certain speed from below
+ego_stop_speed_threshold: null      # Limit to scenarios where the ego reaches a certain speed from above
+speed_noise_tolerance: null         # Value at or below which a speed change between two timepoints should be ignored as noise.
+
+expand_scenarios: false             # Whether to expand multi-sample scenarios to multiple single-sample scenarios
+remove_invalid_goals: false          # Whether to remove scenarios where the mission goal is invalid
+shuffle: false                      # Whether to shuffle the scenarios
+   

@@ -1,0 +1,12 @@
+ego_sorts_construction_zone_statistics:
+  _target_: interplan.planning.metrics.evaluation_metrics.scenario_dependent.ego_sorts_obstacle.EgoSortsObstacleStatistics
+  _convert_: 'all'
+  name: 'ego_sorts_jaywalking_pedestrian'
+  category: 'scenario_dependent'
+  metric_score_unit: 'bool'
+
+  obstacle_type: pedestrian
+  required_metrics:
+    # Parameter: base metric name and other high level metrics used in this metric
+    ego_progress_along_expert_route_metric: ego_progress_along_expert_route_statistics
+

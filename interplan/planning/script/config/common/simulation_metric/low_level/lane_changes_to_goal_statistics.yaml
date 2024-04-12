@@ -1,0 +1,7 @@
+lane_changes_to_goal_statistics:
+  _target_: interplan.planning.metrics.evaluation_metrics.common.lane_changes_to_goal.LaneChangesToGoalStatistics
+  _convert_: 'all'
+  name: 'lane_changes_to_goal'
+  category: 'Planning'
+
+    
