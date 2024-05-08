@@ -1,7 +1,8 @@
 <div id="top" align="center">
 
-    
-# **interPlan:** <br> *A challenging interactive closed-loop planning benchmark*
+<img src="interPlan_logo.png">
+
+A challenging **interactive** closed-loop **planning** benchmark
 
 </div>
 
