@@ -2,6 +2,7 @@
 
 <img src="interPlan_logo.png">
 <h3 align="center"><a href="https://arxiv.org/pdf/2404.07569">Paper</a></h3>
+
 A challenging **interactive** closed-loop **planning** benchmark
 
 </div>
