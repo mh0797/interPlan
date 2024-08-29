@@ -1,7 +1,7 @@
 <div id="top" align="center">
 
 <img src="interPlan_logo.png">
-
+<h3 align="center"><a href="https://arxiv.org/pdf/2404.07569">Paper</a></h3>
 A challenging **interactive** closed-loop **planning** benchmark
 
 </div>
@@ -28,6 +28,12 @@ It can easily be extended and adapted to your needs.
 > - diverse traffic agent policies including conservative, assertive and mixed traffic
 > - exhaustive set of sotA baselines available and tested
 > - scenario modification interface for nuPlan provides a simple method to adapt and create scenarios for your needs
+
+## News
+* **`29 Aug 2024`:** Added more simulation scripts
+* **`29 Aug 2024`:** We found a wrong token in our config (used in `f8684ea2cf1c512b-s0`,`f8684ea2cf1c512b-s1`) which is unsolvable. We replaced it (`9e7581ef72155c9f`) and re-evaluated all models. Results remained unchanged since all models still fail in the new scenario.
+* **`30 June, 2024`:**  Our paper was accepted at [IROS 2024](https://iros2024-abudhabi.org/)!
+* **`12 Apr, 2024`:**  Initial release of interPlan Code.
 
 ## Table of Contents
 1. [Highlights](#highlight)
